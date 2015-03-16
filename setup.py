@@ -2,13 +2,13 @@
 from distutils.core import setup
 
 setup(
-    name='hashbang-config',
+    name='hashbangctl',
     version='0.2',
-    packages=['hashbang-config'],
+    packages=['hashbangctl'],
     scripts=[ 
-        'bin/hashbang',
+        'bin/hashbangctl',
     ],
-    data_files=[('/etc',['hashbang-config.conf'])],
+    data_files=[('/etc',['hashbangctl.conf'])],
     author='Hashbang Team',
     author_email='team@hashbang.sh',
     license='GPL 3.0',
