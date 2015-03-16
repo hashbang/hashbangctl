@@ -14,7 +14,7 @@ if not SUDO_USER:
     exit("This script is designed to be run with sudo")
 
 if not os.path.isfile(CONF_FILE):
-    exit("%s does not exist", % CONF_FILE)
+    exit("%s does not exist" % CONF_FILE)
 
 config = ConfigParser()
 config.read([CONF_FILE])
