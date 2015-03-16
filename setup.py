@@ -4,7 +4,6 @@ from distutils.core import setup
 setup(
     name='hashbangctl',
     version='0.2',
-    packages=['hashbangctl'],
     scripts=[ 
         'bin/hashbangctl',
     ],
