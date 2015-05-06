@@ -46,10 +46,15 @@ menu_items = [
     ('s',"Change Shell"),
     ('a',"Add SSH Public Key"),
     ('d',"Delete SSH Public Key"),
+    ('h',"Help"),
     ('q',"Quit\n"),
 ]
 
-
+def print_actions():
+    print("\nActions:\n")
+    for key,desc in menu_items:
+        print("  %s - %s" % (key,desc))
+    
 def main_menu():
     print("\nLDAP User Details:\n")
     print("  Login : %s" % user['login'])
@@ -66,11 +71,8 @@ def main_menu():
             initial_indent='    ',
             subsequent_indent='       '
         ))
-    print("\nActions:\n")
-    for key,desc in menu_items:
-        print("  %s - %s" % (key,desc))
+    print_actions()
     sys.stdout.write('> ')
-
 
 def ldap_sync():
     p.modify_user(
@@ -94,6 +96,9 @@ while True:
 
     elif key == '\r': # <Enter>
         main_menu()
+
+    elif key == 'h':
+        print_actions()
 
     elif key == 'n':
         user['name'] = raw_input("Enter new name: ")
