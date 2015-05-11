@@ -7,7 +7,7 @@ setup(
     scripts=[ 
         'bin/hashbangctl',
     ],
-    data_files=[('/etc',['hashbangctl.conf'])],
+    data_files=[('/etc',['hashbangctl.example.conf'])],
     author='Hashbang Team',
     author_email='team@hashbang.sh',
     license='GPL 3.0',
