@@ -54,7 +54,7 @@ def print_actions():
     print("\nActions:\n")
     for key,desc in menu_items:
         print("  %s - %s" % (key,desc))
-    
+
 def main_menu():
     print("\nLDAP User Details:\n")
     print("  Login : %s" % user['login'])
@@ -80,12 +80,12 @@ def ldap_sync():
         pubkeys = user['pubkeys'],
         shell = user['shell'],
         name = user['name'],
-    ) 
+    )
 
 main_menu()
 
 while True:
- 
+
     key = getch()
 
     if key in [ key for k,v in menu_items ]:
@@ -136,7 +136,7 @@ while True:
             print('\nPublic Keys updated.')
 
         print('\nPlease press [Enter] to continue')
-                
+
     elif key == 'd':
         if (len(user['pubkeys']) == 0):
             print('\nThere are no SSH Public Keys to delete')
