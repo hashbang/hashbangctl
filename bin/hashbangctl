@@ -46,9 +46,12 @@ menu_items = [
     ('s',"Change Shell"),
     ('a',"Add SSH Public Key"),
     ('d',"Delete SSH Public Key"),
+    ('S',"Save changes"),
     ('h',"Help"),
     ('q',"Quit\n"),
 ]
+
+synced = True
 
 def print_actions():
     print("\nActions:\n")
@@ -82,6 +85,8 @@ def ldap_sync():
         name = user['name'],
     )
 
+    synced = True
+
 main_menu()
 
 while True:
@@ -102,7 +107,7 @@ while True:
 
     elif key == 'n':
         user['name'] = raw_input("Enter new name: ")
-        ldap_sync();
+        synced = False
         print('\nName Updated.')
         print('\nPlease press [Enter] to continue')
 
@@ -113,7 +118,7 @@ while True:
             print('Error: \n"%s" is not an available shell' % shell)
         else:
             user['shell'] = shell
-            ldap_sync()
+            synced = False
             print('\nShell Updated.')
 
         print('\nPlease press [Enter] to continue')
@@ -132,7 +137,7 @@ while True:
 
         elif valid_pubkey:
             user['pubkeys'].append(pubkey)
-            ldap_sync()
+            synced = False
             print('\nPublic Keys updated.')
 
         print('\nPlease press [Enter] to continue')
@@ -150,12 +155,29 @@ while True:
             elif ord(delkey) >= ord('0') and ord(delkey) <= ord(str(len(user['pubkeys']))):
                 print(delkey)
                 del user['pubkeys'][int(delkey)]
-                ldap_sync()
+                synced = False
                 print('\nKey Deleted: %s' % delkey)
             else:
                 print('\nInvalid key number specified')
 
             print('\nPlease press [Enter] to continue')
 
+    elif key == 'S':
+        if not synced:
+            ldap_sync()
+            print('Changes saved.\n')
+        else:
+            print('No changes need saving.\n')
+
     elif key == 'q':
+        if not synced:
+            print('\nSome changes have not been saved.  Save now? [Y/n]')
+            while True:
+                key = getch()
+                if key in [ '\n', 'Y', 'y' ]:
+                    ldap_sync()
+                    break
+                elif key in [ 'n', 'N' ] or ord(key) == 3:
+                    break
+            print('\n')
         break;
