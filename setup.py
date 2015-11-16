@@ -15,6 +15,8 @@ setup(
     long_description=open('README.md').read(),
     install_requires=[
         'provisor',
+        'requests',
+        'json'
     ],
     dependency_links = [
         'http://github.com/hashbang/provisor/tarball/master#egg=provisor',

@@ -3,6 +3,8 @@
 import os
 import sys
 import textwrap
+import json
+import requests
 from ConfigParser import ConfigParser
 from provisor import Provisor
 from provisor.utils import getch, validate_pubkey, drop_privileges
@@ -45,6 +47,7 @@ menu_items = [
     ('n',"Change Name"),
     ('s',"Change Shell"),
     ('a',"Add SSH Public Key"),
+    ('i',"Import github SSH Public Keys"),
     ('d',"Delete SSH Public Key"),
     ('S',"Save changes"),
     ('h',"Help"),
@@ -87,6 +90,23 @@ def ldap_sync():
 
     synced = True
 
+def add_pubkey( pubkey ):
+    valid_pubkey = False;
+    try:
+        validate_pubkey(pubkey)
+        valid_pubkey = True
+    except Exception, e:
+        print("\nError: %s" % e)
+
+    if pubkey in user['pubkeys']:
+        print('\nPublic Key already exists.')
+
+    elif valid_pubkey:
+        user['pubkeys'].append(pubkey)
+        synced = False
+        print('\nPublic Keys updated.')
+
+
 main_menu()
 
 while True:
@@ -125,20 +145,23 @@ while True:
 
     elif key == 'a':
         pubkey = raw_input("Paste SSH Public Key to be added:\n")
-        valid_pubkey = False;
+        add_pubkey(pubkey)
+
+        print('\nPlease press [Enter] to continue')
+
+    elif key == 'i':
+        github_user = raw_input("Enter github username to fetch keys from [%s]:\n"%user.login)
+        if github_user == '':
+            github_user = user.login
+        result = requests.get("https://api.github.com/users/%s/keys" % github_user)
         try:
-            validate_pubkey(pubkey)
-            valid_pubkey = True
-        except Exception, e:
-            print("\nError: %s" % e)
+            keys = json.loads(result.content)
+            for key in keys:
+                add_pubkey(key['key'])
+                pass
+        except ValueError, e:
+            print("\nError: got invalid json: %s", e)
 
-        if pubkey in user['pubkeys']:
-            print('\nPublic Key already exists.')
-
-        elif valid_pubkey:
-            user['pubkeys'].append(pubkey)
-            synced = False
-            print('\nPublic Keys updated.')
 
         print('\nPlease press [Enter] to continue')
 
