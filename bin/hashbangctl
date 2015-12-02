@@ -150,9 +150,9 @@ while True:
         print('\nPlease press [Enter] to continue')
 
     elif key == 'i':
-        github_user = raw_input("Enter github username to fetch keys from [%s]:\n"%user.login)
+        github_user = raw_input("Enter github username to fetch keys from [%s]:\n"%user['login'])
         if github_user == '':
-            github_user = user.login
+            github_user = user['login']
         result = requests.get("https://api.github.com/users/%s/keys" % github_user)
         try:
             keys = json.loads(result.content)
