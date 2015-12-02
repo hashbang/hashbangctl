@@ -4,7 +4,7 @@ from distutils.core import setup
 setup(
     name='hashbangctl',
     version='0.2',
-    scripts=[ 
+    scripts=[
         'bin/hashbangctl',
     ],
     data_files=[('/etc',['hashbangctl.example.conf'])],
@@ -15,8 +15,7 @@ setup(
     long_description=open('README.md').read(),
     install_requires=[
         'provisor',
-        'requests',
-        'json'
+        'requests'
     ],
     dependency_links = [
         'http://github.com/hashbang/provisor/tarball/master#egg=provisor',
