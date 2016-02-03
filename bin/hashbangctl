@@ -54,8 +54,6 @@ menu_items = [
     ('q',"Quit\n"),
 ]
 
-synced = True
-
 def print_actions():
     print("\nActions:\n")
     for key,desc in menu_items:
@@ -88,7 +86,6 @@ def ldap_sync():
         name = user['name'],
     )
 
-    synced = True
 
 def add_pubkey( pubkey ):
     valid_pubkey = False;
@@ -103,7 +100,6 @@ def add_pubkey( pubkey ):
 
     elif valid_pubkey:
         user['pubkeys'].append(pubkey)
-        synced = False
         print('\nPublic Keys updated.')
 
 
@@ -127,7 +123,6 @@ while True:
 
     elif key == 'n':
         user['name'] = raw_input("Enter new name: ")
-        synced = False
         print('\nName Updated.')
         print('\nPlease press [Enter] to continue')
 
@@ -138,7 +133,6 @@ while True:
             print('Error: \n"%s" is not an available shell' % shell)
         else:
             user['shell'] = shell
-            synced = False
             print('\nShell Updated.')
 
         print('\nPlease press [Enter] to continue')
@@ -178,7 +172,6 @@ while True:
             elif ord(delkey) >= ord('0') and ord(delkey) <= ord(str(len(user['pubkeys']))):
                 print(delkey)
                 del user['pubkeys'][int(delkey)]
-                synced = False
                 print('\nKey Deleted: %s' % delkey)
             else:
                 print('\nInvalid key number specified')
@@ -186,21 +179,10 @@ while True:
             print('\nPlease press [Enter] to continue')
 
     elif key == 'S':
-        if not synced:
-            ldap_sync()
-            print('Changes saved.\n')
-        else:
-            print('No changes need saving.\n')
+        ldap_sync()
+        print('Changes saved.\n')
+
 
     elif key == 'q':
-        if not synced:
-            print('\nSome changes have not been saved.  Save now? [Y/n]')
-            while True:
-                key = getch()
-                if key in [ '\n', 'Y', 'y' ]:
-                    ldap_sync()
-                    break
-                elif key in [ 'n', 'N' ] or ord(key) == 3:
-                    break
-            print('\n')
-        break;
+        ldap_sync()
+        break
