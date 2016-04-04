@@ -129,11 +129,15 @@ while True:
     elif key == 's':
         shell = raw_input("Enter new shell, eg /bin/bash:")
 
-        if shell not in ['/bin/bash','/bin/zsh','/bin/ksh','/bin/fish']:
-            print('Error: \n"%s" is not an available shell' % shell)
+        if not shell or shell[0] == '#':
+            print('Error: "%s" is not a valid shell' % shell)
         else:
-            user['shell'] = shell
-            print('\nShell Updated.')
+            with open('/etc/shells') as shells_list:
+                if shell not in map(shells_list, lambda s: s.rstrip('\n')):
+                    print('Error: \n"%s" is not an available shell' % shell)
+                else:
+                    user['shell'] = shell
+                    print('\nShell Updated.')
 
         print('\nPlease press [Enter] to continue')
 
