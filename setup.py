@@ -18,6 +18,6 @@ setup(
         'requests'
     ],
     dependency_links = [
-        'http://github.com/hashbang/provisor/tarball/master#egg=provisor',
+        'git+https://github.com/hashbang/provisor/',
     ]
 )
