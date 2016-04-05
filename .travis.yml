@@ -1,0 +1,12 @@
+sudo: False
+
+language: python
+python:
+  - 2.7
+
+install:
+  - pip install tox
+  - pip install 'git+https://github.com/hashbang/provisor/#egg=provisor'
+
+script:
+  - tox
