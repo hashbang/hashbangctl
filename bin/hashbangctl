@@ -133,7 +133,7 @@ while True:
             print('Error: "%s" is not a valid shell' % shell)
         else:
             with open('/etc/shells') as shells_list:
-                if shell not in map(shells_list, lambda s: s.rstrip('\n')):
+                if shell not in map(lambda s: s.rstrip('\n'), shells_list):
                     print('Error: \n"%s" is not an available shell' % shell)
                 else:
                     user['shell'] = shell
