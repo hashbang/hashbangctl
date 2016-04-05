@@ -22,11 +22,11 @@ config = ConfigParser()
 config.read([CONF_FILE])
 
 p = Provisor(
-    uri=config.get('ldap','uri'),
-    user=config.get('ldap','user'),
-    password=config.get('ldap','password'),
-    user_base=config.get('ldap','user-base'),
-    group_base=config.get('ldap','group-base')
+    uri=config.get('ldap', 'uri'),
+    user=config.get('ldap', 'user'),
+    password=config.get('ldap', 'password'),
+    user_base=config.get('ldap', 'user-base'),
+    group_base=config.get('ldap', 'group-base')
 )
 
 drop_privileges()
@@ -34,7 +34,7 @@ drop_privileges()
 ldap_user = p.get_user(SUDO_USER)
 
 user = {
-    'name': ldap_user.setdefault('cn',['Unknown'])[0],
+    'name': ldap_user.setdefault('cn', ['Unknown'])[0],
     'login': ldap_user['uid'][0],
     'uid': ldap_user['uidNumber'][0],
     'shell': ldap_user['loginShell'][0],
@@ -44,20 +44,22 @@ user = {
 }
 
 menu_items = [
-    ('n',"Change Name"),
-    ('s',"Change Shell"),
-    ('a',"Add SSH Public Key"),
-    ('i',"Import github SSH Public Keys"),
-    ('d',"Delete SSH Public Key"),
-    ('S',"Save changes"),
-    ('h',"Help"),
-    ('q',"Quit\n"),
+    ('n', "Change Name"),
+    ('s', "Change Shell"),
+    ('a', "Add SSH Public Key"),
+    ('i', "Import github SSH Public Keys"),
+    ('d', "Delete SSH Public Key"),
+    ('S', "Save changes"),
+    ('h', "Help"),
+    ('q', "Quit\n"),
 ]
+
 
 def print_actions():
     print("\nActions:\n")
-    for key,desc in menu_items:
-        print("  %s - %s" % (key,desc))
+    for key, desc in menu_items:
+        print("  %s - %s" % (key, desc))
+
 
 def main_menu():
     print("\nLDAP User Details:\n")
@@ -70,7 +72,7 @@ def main_menu():
     print("  SSH Public Keys:")
     for key in user['pubkeys']:
         print(textwrap.fill(
-            "%s. %s" % (user['pubkeys'].index(key),key),
+            "%s. %s" % (user['pubkeys'].index(key), key),
             width=74,
             initial_indent='    ',
             subsequent_indent='       '
@@ -78,17 +80,18 @@ def main_menu():
     print_actions()
     sys.stdout.write('> ')
 
+
 def ldap_sync():
     p.modify_user(
         SUDO_USER,
-        pubkeys = user['pubkeys'],
-        shell = user['shell'],
-        name = user['name'],
+        pubkeys=user['pubkeys'],
+        shell=user['shell'],
+        name=user['name'],
     )
 
 
 def add_pubkey( pubkey ):
-    valid_pubkey = False;
+    valid_pubkey = False
     try:
         validate_pubkey(pubkey)
         valid_pubkey = True
@@ -109,13 +112,13 @@ while True:
 
     key = getch()
 
-    if key in [ key for k,v in menu_items ]:
+    if key in [ key for k, v in menu_items ]:
         print("%s\n" % key)
 
-    if ord(key) == 3: # <Ctrl+C>
-        break;
+    if ord(key) == 3:  # <Ctrl+C>
+        break
 
-    elif key == '\r': # <Enter>
+    elif key == '\r':  # <Enter>
         main_menu()
 
     elif key == 'h':
@@ -171,7 +174,7 @@ while True:
             print('(Or Press ESC to Cancel)')
             sys.stdout.write('\n> ')
             delkey = getch()
-            if ord(delkey) == 27: #Esc
+            if ord(delkey) == 27:  # Esc
                 main_menu()
             elif ord(delkey) >= ord('0') and ord(delkey) <= ord(str(len(user['pubkeys']))):
                 print(delkey)
@@ -185,7 +188,6 @@ while True:
     elif key == 'S':
         ldap_sync()
         print('Changes saved.\n')
-
 
     elif key == 'q':
         ldap_sync()
