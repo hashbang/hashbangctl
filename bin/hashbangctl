@@ -129,7 +129,10 @@ while True:
     elif key == 's':
         shell = raw_input("Enter new shell, eg /bin/bash:")
 
-        if shell not in ['/bin/bash','/bin/zsh','/bin/ksh','/bin/fish']:
+    with open('/etc/shells') as shells_list:
+        
+        # the first line of /etc/shells is a comment, so ignore it
+        if shell not in [line.rstrip('\n') for line in shells_list][1:]
             print('Error: \n"%s" is not an available shell' % shell)
         else:
             user['shell'] = shell
