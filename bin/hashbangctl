@@ -99,7 +99,7 @@ def add_pubkey( pubkey ):
         print('\nPublic Key already exists.')
 
     elif valid_pubkey:
-        user['pubkeys'].append(pubkey)
+        user['pubkeys'].append(str(pubkey))
         print('\nPublic Keys updated.')
 
 
