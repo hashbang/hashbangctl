@@ -144,15 +144,9 @@ while True:
         print('\nPlease press [Enter] to continue')
 
     elif key == 'H':
-        hosts = [
-            "da1.hashbang.sh",
-            "ny1.hashbang.sh",
-            "to1.hashbang.sh",
-            "sf1.hashbang.sh"
-        ]
         host = raw_input("Enter new homeserver, eg {da,ny,to,sf}1.hashbang.sh")
 
-        if host not in hosts:
+        if host not in p.list_servers():
             print('Error: "%s" is not a valid homeserver' % host)
         else:
             user['host'] = host
