@@ -46,6 +46,7 @@ user = {
 menu_items = [
     ('n',"Change Name"),
     ('s',"Change Shell"),
+    ('h',"Change Homeserver"),
     ('a',"Add SSH Public Key"),
     ('i',"Import github SSH Public Keys"),
     ('d',"Delete SSH Public Key"),
@@ -83,6 +84,7 @@ def ldap_sync():
         SUDO_USER,
         pubkeys = user['pubkeys'],
         shell = user['shell'],
+        hostname = user['host'],
         name = user['name'],
     )
 
@@ -138,6 +140,23 @@ while True:
                 else:
                     user['shell'] = shell
                     print('\nShell Updated.')
+
+        print('\nPlease press [Enter] to continue')
+
+    elif key == 'h':
+        hosts = [
+            "da1.hashbang.sh",
+            "ny1.hashbang.sh",
+            "to1.hashbang.sh",
+            "sf1.hashbang.sh"
+        ]
+        host = raw_input("Enter new homeserver, eg {da,ny,to,sf}1.hashbang.sh")
+
+        if not host or not host.endswith(".hashbang.sh") or host not in hosts:
+            print('Error: "%s" is not a valid homeserver' % host)
+        else:
+            user['host'] = host
+            print('Homeserver updated')
 
         print('\nPlease press [Enter] to continue')
 
