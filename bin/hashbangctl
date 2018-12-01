@@ -152,7 +152,7 @@ while True:
         ]
         host = raw_input("Enter new homeserver, eg {da,ny,to,sf}1.hashbang.sh")
 
-        if not host or not host.endswith(".hashbang.sh") or host not in hosts:
+        if host not in hosts:
             print('Error: "%s" is not a valid homeserver' % host)
         else:
             user['host'] = host
