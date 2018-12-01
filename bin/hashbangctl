@@ -46,7 +46,7 @@ user = {
 menu_items = [
     ('n',"Change Name"),
     ('s',"Change Shell"),
-    ('h',"Change Homeserver"),
+    ('H',"Change Homeserver"),
     ('a',"Add SSH Public Key"),
     ('i',"Import github SSH Public Keys"),
     ('d',"Delete SSH Public Key"),
@@ -143,7 +143,7 @@ while True:
 
         print('\nPlease press [Enter] to continue')
 
-    elif key == 'h':
+    elif key == 'H':
         hosts = [
             "da1.hashbang.sh",
             "ny1.hashbang.sh",
