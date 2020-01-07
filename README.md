@@ -15,6 +15,9 @@ This dameon allows users to create/manage shell accounts over ssh.
   * If incoming ssh key not detected, direct users to run our key setup script
   * If incoming ssh key detected and account exists, direct to management menu
     * Allow users to change their details in UserDB, manage keys, etc
+  * Abuse mitigation
+    * text captcha
+    * rate limiting
   * k8s deployment boilerplate
     * strict pod security policy
     * strict apparmor/seccomp rules
