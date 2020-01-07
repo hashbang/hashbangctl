@@ -1,9 +1,49 @@
-User config tool for #!
+# hashbangctl
+<https://github.com/hashbang/hashbangctl>
 
-Lets users change ldap details, ssh keys, etc.
+## About ##
 
-TODO. Document
+This dameon allows users to create/manage shell accounts over ssh.
 
-Install: `pip install git+https://github.com/hashbang/hashbangctl`
+## Features ##
 
-Upgrading is managed via Ansible (see [admin-tools](https://github.com/hashbang/admin-tools)).
+* Current
+  * Users can ssh in and get a form to create a user (does nothing yet)
+* Future
+  * Will prefill form with username and ssh keys from incoming connection
+  * If incoming ssh key not detected, direct users to run our key setup script
+  * If incoming ssh key detected and account exists, direct to management menu
+    * Allow users to change their details in UserDB, manage keys, etc
+
+## Requirements ##
+- Docker 19+
+
+## Build
+
+```
+make
+```
+
+## Start
+
+```
+make start
+```
+
+## Stop
+
+```
+make stop
+```
+
+## Logs
+
+```
+make logs
+```
+
+## Test
+
+```
+make test
+```
