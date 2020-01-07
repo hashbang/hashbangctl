@@ -15,6 +15,6 @@ RUN cd /src/ && \
 FROM scratch
 
 COPY --from=build /src/bin/server /server
-COPY --from=build /src/bin/signup /signup
+COPY --from=build /src/bin/client /client
 
 CMD ["/server"]

@@ -26,7 +26,7 @@ func main() {
 	        return
 	    }
 
-        cmd := exec.Command("/signup")
+        cmd := exec.Command("/client")
         cmd.Env = append(cmd.Env, fmt.Sprintf("TERM=%s", ptyReq.Term))
 	    f, err := pty.Start(cmd)
 	    if err != nil {
