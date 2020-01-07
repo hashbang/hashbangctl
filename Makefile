@@ -26,7 +26,7 @@ shell: start
 
 .PHONY: logs
 logs:
-	docker logs hashbangctl
+	docker logs -f hashbangctl
 
 .PHONY: test
 test: shell
