@@ -25,32 +25,81 @@ This dameon allows users to create/manage shell accounts over ssh.
 ## Requirements ##
 - Docker 19+
 
-## Build
+## Usage ##
+
+### Build
+
+Build or Rebuild the hashbangctl container
 
 ```
-make
+make build
 ```
 
-## Start
+### Connect
+
+Connect to the hashbangctl container using your own ssh credentials
+
+```
+make connect
+```
+
+## Develop
+
+### Start
+
+Start the hashbangctl docker container
 
 ```
 make start
 ```
 
-## Stop
+### Stop
+
+Stop the hashbangctl docker container
 
 ```
 make stop
 ```
 
-## Logs
+### Log
+
+Tail logs from the hashbangctl docker container
 
 ```
-make logs
+make log
 ```
 
-## Test
+### Clean
+
+Stop all containers and cleanup
+
+```
+make clean
+```
+
+## Testing
+
+### Test
+
+Run the BATS test suite
 
 ```
 make test
+```
+
+### test-ssh
+
+ssh to the hashbangctl container using test credentials
+
+```
+make test-ssh
+```
+
+### Test Shell
+
+Launch a shell in the test suite to run any tests by hand
+
+```
+make test-shell
+> ssh_command "ed25519" "jdoe" "some-command"
 ```
