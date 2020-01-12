@@ -20,20 +20,20 @@ import (
 )
 
 type sessionInfo struct {
-	User          string   `json:"user"`
+    User          string   `json:"user"`
     ClientVersion string   `json:"clientVersion"`
     RemoteAddr    string   `json:"remoteAddr"`
-	Keys          []string `json:"keys"`
+    Keys          []string `json:"keys"`
 }
 
 type Server struct {
-	sshConfig   *ssh.ServerConfig
-	sessionInfo map[string]sessionInfo
+    sshConfig   *ssh.ServerConfig
+    sessionInfo map[string]sessionInfo
     mu          sync.RWMutex
 }
 
 func setWinsize(fd uintptr, w, h uint32) {
-	syscall.Syscall(
+    syscall.Syscall(
         syscall.SYS_IOCTL,
         fd,
         uintptr(syscall.TIOCSWINSZ),
@@ -44,9 +44,9 @@ func setWinsize(fd uintptr, w, h uint32) {
 }
 
 func parseDims(b []byte) (uint32, uint32) {
-	w := binary.BigEndian.Uint32(b)
-	h := binary.BigEndian.Uint32(b[4:])
-	return w, h
+    w := binary.BigEndian.Uint32(b)
+    h := binary.BigEndian.Uint32(b[4:])
+    return w, h
 }
 
 func PtyRun(c *exec.Cmd, tty *os.File) (err error) {
@@ -76,8 +76,8 @@ func (s *Server) Handle(nConn net.Conn) {
             f, tty, _ := pty.Open()
             go func(in <-chan *ssh.Request) {
                 s.mu.RLock()
-	            si := s.sessionInfo[string(conn.SessionID())]
-	            s.mu.RUnlock()
+                si := s.sessionInfo[string(conn.SessionID())]
+                s.mu.RUnlock()
                 sessionJSON, _ := json.Marshal(si)
                 for req := range in {
                     switch req.Type {
@@ -127,18 +127,18 @@ func (s *Server) PublicKeyCallback(
     key ssh.PublicKey,
 ) (*ssh.Permissions, error) {
     s.mu.Lock()
-	si := s.sessionInfo[string(conn.SessionID())]
-	si.User = conn.User()
-	si.RemoteAddr = fmt.Sprintf("%s", conn.RemoteAddr())
-	si.ClientVersion = fmt.Sprintf("%s", conn.ClientVersion())
-	si.Keys = append(
+    si := s.sessionInfo[string(conn.SessionID())]
+    si.User = conn.User()
+    si.RemoteAddr = fmt.Sprintf("%s", conn.RemoteAddr())
+    si.ClientVersion = fmt.Sprintf("%s", conn.ClientVersion())
+    si.Keys = append(
         si.Keys,
         strings.TrimSpace(
             string(ssh.MarshalAuthorizedKey(key)),
         ),
     )
-	s.sessionInfo[string(conn.SessionID())] = si
-	s.mu.Unlock()
+    s.sessionInfo[string(conn.SessionID())] = si
+    s.mu.Unlock()
 
     return nil, errors.New("")
 }
