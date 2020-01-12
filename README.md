@@ -24,75 +24,40 @@ This dameon allows users to create/manage shell accounts over ssh.
 
 ## Requirements ##
 - Docker 19+
+- Go 1.13+
 
 ## Usage ##
 
 ### Build
 
-Build or Rebuild the hashbangctl container
+Build or rebuild the binaries.
 
 ```
-make build
+make
+```
+
+### Serve
+
+Start the server
+
+```
+make serve
 ```
 
 ### Connect
 
-Connect to the hashbangctl container using your own ssh credentials
+Connect to the server
 
 ```
 make connect
 ```
 
-## Develop
-
-### Start
-
-Start the hashbangctl docker container
-
-```
-make start
-```
-
-### Stop
-
-Stop the hashbangctl docker container
-
-```
-make stop
-```
-
-### Log
-
-Tail logs from the hashbangctl docker container
-
-```
-make log
-```
-
-### Clean
-
-Stop all containers and cleanup
-
-```
-make clean
-```
-
-## Testing
-
 ### Test
 
-Run the BATS test suite
+Run the test suite
 
 ```
 make test
-```
-
-### test-ssh
-
-ssh to the hashbangctl container using test credentials
-
-```
-make test-ssh
 ```
 
 ### Test Shell
@@ -102,4 +67,12 @@ Launch a shell in the test suite to run any tests by hand
 ```
 make test-shell
 > ssh_command "ed25519" "jdoe" "some-command"
+```
+
+### Clean
+
+Stop all containers and cleanup
+
+```
+make clean
 ```

@@ -1,63 +1,141 @@
 package main
 
 import (
+    "log"
+    "net"
     "io"
+    "sync"
     "fmt"
-    "os"
     "strings"
-    "os/exec"
     "syscall"
     "unsafe"
-    "log"
-    "github.com/gliderlabs/ssh"
+    "os"
+    "os/exec"
+    "path/filepath"
+    "crypto/rsa"
+    "crypto/rand"
+    "encoding/binary"
+    "golang.org/x/crypto/ssh"
     "github.com/kr/pty"
-    gossh "golang.org/x/crypto/ssh"
 )
 
-func setWinsize(f *os.File, w, h int) {
-	syscall.Syscall(syscall.SYS_IOCTL, f.Fd(), uintptr(syscall.TIOCSWINSZ),
-		uintptr(unsafe.Pointer(&struct{ h, w, x, y uint16 }{uint16(h), uint16(w), 0, 0})))
+func setWinsize(fd uintptr, w, h uint32) {
+	syscall.Syscall(
+        syscall.SYS_IOCTL,
+        fd,
+        uintptr(syscall.TIOCSWINSZ),
+        uintptr(unsafe.Pointer(
+            &struct{ h, w, x, y uint16 }{uint16(h), uint16(w), 0, 0},
+        )),
+    )
+}
+
+func parseDims(b []byte) (uint32, uint32) {
+	w := binary.BigEndian.Uint32(b)
+	h := binary.BigEndian.Uint32(b[4:])
+	return w, h
+}
+
+func PtyRun(c *exec.Cmd, tty *os.File) (err error) {
+    defer tty.Close()
+    c.Stdout = tty
+    c.Stdin = tty
+    c.Stderr = tty
+    c.SysProcAttr = &syscall.SysProcAttr{
+        Setctty: true,
+        Setsid:  true,
+    }
+    return c.Start()
 }
 
 func main() {
-    ssh.Handle(func(s ssh.Session) {
-	    ptyReq, winCh, isPty := s.Pty()
-	    if !isPty {
-	        io.WriteString(s, "only interactive terminals are supported")
-	        s.Exit(1)
-	        return
-	    }
-        cmd := exec.Command("/client")
-        cmd.Env = append(cmd.Env, fmt.Sprintf("TERM=%s", ptyReq.Term))
 
-        user := s.User()
-        cmd.Env = append(cmd.Env, fmt.Sprintf("USERNAME=%s", ptyReq.Term))
+    runDir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 
-        publicKey := strings.TrimSpace(string(gossh.MarshalAuthorizedKey(s.PublicKey())))
-        cmd.Env = append(cmd.Env, fmt.Sprintf("PUBLIC_KEY=%s", publicKey))
+    // Setup SSH configuration
+    config := ssh.ServerConfig{
+        NoClientAuth: true,
+        PublicKeyCallback: func(
+            conn ssh.ConnMetadata,
+            key ssh.PublicKey,
+        ) (*ssh.Permissions, error) {
+            user := conn.User()
+            publicKey := strings.TrimSpace(
+                string(ssh.MarshalAuthorizedKey(key)),
+            )
+            log.Printf("New connection: %s %s", publicKey, user)
+            return nil, nil
+        },
+        KeyboardInteractiveCallback: func(
+            ssh.ConnMetadata,
+            ssh.KeyboardInteractiveChallenge,
+        ) (*ssh.Permissions, error) {
+            return nil, nil
+        },
+    }
 
-        log.Println(fmt.Sprintf("Connection: %s %s", publicKey, user))
+    // Setup Host key
+    key, _ := rsa.GenerateKey(rand.Reader, 2048)
+    signer, _ := ssh.NewSignerFromKey(key)
+    config.AddHostKey(signer)
 
-	    f, err := pty.Start(cmd)
-	    if err != nil {
-	    	panic(err)
-	    }
-	    go func() {
-	    	for win := range winCh {
-	    		setWinsize(f, win.Width, win.Height)
-	    	}
-	    }()
-	    go func() {
-	    	io.Copy(f, s) // stdin
-	    }()
-	    io.Copy(s, f) // stdout
-	    cmd.Wait()
-
-    })
-    publicKeyOption := ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
-		return true
-	})
-
-    log.Println("starting ssh server on port 2222...")
-    log.Fatal(ssh.ListenAndServe(":2222", nil, publicKeyOption))
+    // Listen
+    listener, err := net.Listen("tcp4", ":2222")
+    if err != nil { panic(err) }
+    for {
+        conn, _ := listener.Accept()
+        sshConn, chans, _, _ := ssh.NewServerConn(conn, &config)
+        log.Println("->", sshConn.RemoteAddr())
+        go func(chans <-chan ssh.NewChannel){
+            for newChannel := range chans {
+                if t := newChannel.ChannelType(); t != "session" {
+                    newChannel.Reject(
+                        ssh.UnknownChannelType,
+                        fmt.Sprintf("unknown channel type: %s", t),
+                    );
+                    continue;
+                }
+                channel, requests, _ := newChannel.Accept()
+                f, tty, _ := pty.Open()
+                go func(in <-chan *ssh.Request) {
+                    for req := range in {
+                        switch req.Type {
+                            case "shell":
+                                    filepath.Abs(filepath.Dir(os.Args[0]))
+                                cmd := exec.Command(
+                                    fmt.Sprintf("%s/client", runDir),
+                                )
+                                cmd.Env = []string{"TERM=xterm"}
+                                err := PtyRun(cmd, tty)
+                                if err != nil {
+                                    log.Printf("%s", err)
+                                }
+                                var once sync.Once
+                                close := func() {
+                                    channel.Close()
+                                    log.Println("<-", sshConn.RemoteAddr())
+                                }
+                                go func() {
+                                    io.Copy(channel, f)
+                                    once.Do(close)
+                                }()
+                                go func() {
+                                    io.Copy(f, channel)
+                                    once.Do(close)
+                                }()
+                            case "pty-req":
+                                termLen := req.Payload[3]
+                                w, h := parseDims(req.Payload[termLen+4:])
+                                setWinsize(f.Fd(), w, h)
+                            case "window-change":
+                                w, h := parseDims(req.Payload)
+                                setWinsize(f.Fd(), w, h)
+                                continue
+                        }
+                        req.Reply(true, nil)
+                    }
+                }(requests)
+            }
+        }(chans)
+    }
 }
