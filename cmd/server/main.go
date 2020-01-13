@@ -101,6 +101,7 @@ func handleConnection(nConn net.Conn, sshConfig *ssh.ServerConfig) {
                             )
                             cmd.Env = append(
                                 os.Environ(),
+                                "TERM=xterm",
                                 fmt.Sprintf("IP=%s", ip),
                                 fmt.Sprintf("VERSION=%s", version),
                                 fmt.Sprintf("USER=%s", user),

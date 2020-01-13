@@ -22,7 +22,7 @@ connect:
 		-p2222 localhost
 
 .PHONY: test
-test: docker-build docker-start docker-test docker-stop
+test: docker-test docker-stop
 
 .PHONY: test-shell
 test-shell: docker-start docker-test-shell docker-stop
@@ -63,7 +63,7 @@ docker-log:
 docker-clean: docker-stop
 	docker image rm local/hashbangctl
 
-.PHONY: test
+.PHONY: docker-test
 docker-test: docker-stop docker-start docker-build-test
 	docker run \
 		--rm \

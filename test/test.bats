@@ -5,7 +5,7 @@ load test_helper
     [ "$status" -eq 0 ]
 }
 
-@test "Can not login without an ssh key" {
+@test "Can't login without an ssh key" {
     run ssh_command ""
-    [ "$status" -eq 255 ]
+    [ "$status" -eq 1 ]
 }
