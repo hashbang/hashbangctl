@@ -99,7 +99,13 @@ func handleConnection(nConn net.Conn, sshConfig *ssh.ServerConfig) {
                             cmd := exec.Command(
                                 fmt.Sprintf("%s/client", runDir),
                             )
-                            cmd.Env = []string{"TERM=xterm"}
+                            cmd.Env = append(
+                                os.Environ(),
+                                fmt.Sprintf("IP=%s", ip),
+                                fmt.Sprintf("VERSION=%s", version),
+                                fmt.Sprintf("USER=%s", user),
+                                fmt.Sprintf("KEY=%s", key),
+                            )
                             err := ptyRun(cmd, tty)
                             if err != nil {
                                 log.Printf("%s", err)
