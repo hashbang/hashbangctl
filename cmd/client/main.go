@@ -17,87 +17,54 @@ func main() {
         )
         os.Exit(1)
     }
+
     app := tview.NewApplication()
+
+    logo := tview.NewTextView()
+    logo.SetTextAlign(1)
+    logo.SetText(`
+     ######    ######      !!!!!!
+     #::::#    #::::#      !::::!
+     #::::#    #::::#      !::::!
+######::::######::::###### !::::!
+#::::::::::::::::::::::::# !::::!
+######::::######::::###### !::::!
+     #::::#    #::::#      !::::!
+     #::::#    #::::#      !::::!
+######::::######::::###### !::::!
+#::::::::::::::::::::::::# !!!!!!
+######::::######::::###### 　　　
+     #::::#    #::::#      !!!!!!
+     #::::#    #::::#      !!::!!
+     ######    ######      !!!!!!
+`)
+
     frame := tview.NewFrame(func() tview.Primitive {
-    form := tview.NewForm().
-        AddDropDown(
-            "Server",
-            []string{"de1.hashbang.sh"},
-            0,
-            nil,
-        ).
-        AddInputField(
-            "username",
-            os.Getenv("USER"),
-            150,
-            nil,
-            nil,
-        ).
-        AddInputField(
-            "ssh-key",
-            os.Getenv("KEY"),
-            150,
-            nil,
-            nil,
-        ).
-        AddButton("Create Account", func() {
+
+        form := tview.NewForm()
+        form.AddDropDown("Server", []string{"de1.hashbang.sh"}, 0, nil)
+        form.AddInputField("User Name", os.Getenv("USER"), 25, nil, nil)
+        form.AddInputField("Public Key", os.Getenv("KEY"), 150, nil, nil)
+        form.AddButton("Create", func() {
             // actually create account here
-        }).
-        AddButton("Exit", func() {
-            app.Stop()
         })
-        form.
-            SetBorder(true).
-            SetTitle("Sign Up for #!").
-            SetTitleAlign(tview.AlignCenter)
-
+        form.AddButton("Exit", func() { app.Stop() })
+        form.SetLabelColor(tcell.ColorWhite)
+        form.SetItemPadding(2)
+        form.SetFieldBackgroundColor(tcell.ColorGray)
+        form.SetButtonTextColor(tcell.ColorWhite)
+        form.SetButtonBackgroundColor(tcell.ColorGray)
+        form.SetButtonsAlign(1)
+        form.SetBorder(true)
         return form
-    }()).
-        SetBorders(2, 2, 2, 2, 4, 4).
-        AddText(
-            "Welcome to #!",
-            true,
-            tview.AlignLeft,
-            tcell.ColorWhite,
-        ).
-        AddText(
-            "This network has three rules:",
-            true,
-            tview.AlignLeft,
-            tcell.ColorWhite,
-        ).
-        AddText(
-            "1. When people need help, teach. Don't do it for them",
-            true,
-            tview.AlignLeft,
-            tcell.ColorWhite,
-        ).
-        AddText(
-            "2. Don't use our resources for closed source projects",
-            true,
-            tview.AlignLeft,
-            tcell.ColorWhite,
-        ).
-        AddText(
-            "3. Be excellent to each other",
-            true,
-            tview.AlignLeft,
-            tcell.ColorWhite,
-        ).
-        AddText(
-            "open source everything",
-            false,
-            tview.AlignCenter,
-            tcell.ColorWhite,
-        ).
-        AddText(
-            "for help, join irc at irc.hashbang.sh",
-            false,
-            tview.AlignCenter,
-            tcell.ColorWhite,
-        )
+    }())
+    frame.SetBorder(false)
+    frame.SetBorders(0, 2, 0, 0, 10, 10)
 
-    if err := app.SetRoot(frame, true).Run(); err != nil {
-        panic(err)
-    }
+    grid := tview.NewGrid()
+    grid.AddItem(logo, 0, 0, 1, 1, 0, 0, false)
+    grid.AddItem(frame, 1, 0, 1, 1, 0, 0, true)
+
+
+    if err := app.SetRoot(grid, true).Run(); err != nil { panic(err) }
 }
