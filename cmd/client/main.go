@@ -7,6 +7,19 @@ import (
     "github.com/rivo/tview"
 )
 
+func getUsername(){
+    // Modify input username to be unix compatible
+    // if result is available, return
+    // If not, append random 4 digit number then return
+    //return true
+}
+
+func createAccount(server string, user string, key string){
+    // Create account
+    // trigger rendering of results and exit button
+    //log.Println(server, user, key)
+}
+
 func main() {
     if os.Getenv("KEY") == "none" {
         fmt.Fprintln(
@@ -35,6 +48,7 @@ func main() {
      █████   █████　　　　　　
      █████   █████       █████
      █████   █████       █████
+
 `)
 
     frame := tview.NewFrame(func() tview.Primitive {
@@ -47,13 +61,25 @@ func main() {
         form.SetButtonBackgroundColor(tcell.ColorWhite)
         form.SetBorder(false)
         form.SetButtonsAlign(1)
-        form.AddDropDown("Server", []string{"de1.hashbang.sh"}, 0, nil)
-        form.AddInputField("User Name", os.Getenv("USER"), 33, nil, nil)
-        form.AddInputField("Public Key", os.Getenv("KEY"), 33, nil, nil)
-        form.AddButton("Create", func() {
-            // actually create account here
+        form.AddDropDown("Server",
+            []string{"de1.hashbang.sh","la1.hashbang.sh"}, 0, nil,
+        )
+        form.AddInputField("User Name",
+            os.Getenv("USER"), 33, tview.InputFieldMaxLength(30), nil,
+        )
+        form.AddInputField("Public Key",
+            os.Getenv("KEY"), 33, tview.InputFieldMaxLength(800), nil,
+        )
+        form.AddButton("Create", func(){
+            server_dropdown := form.GetFormItem(0).(*tview.DropDown)
+            _, server := server_dropdown.GetCurrentOption()
+            createAccount(
+                server,
+                form.GetFormItem(1).(*tview.InputField).GetText(),
+                form.GetFormItem(2).(*tview.InputField).GetText(),
+            )
         })
-        form.AddButton("Exit", func() { app.Stop() })
+        form.AddButton("Exit", app.Stop )
         return form
     }())
     frame.SetBorder(false)
