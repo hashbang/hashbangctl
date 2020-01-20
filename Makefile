@@ -1,3 +1,5 @@
+NAMESPACE ?= hashbangctl
+
 ## Primary Targets
 
 .PHONY: build
@@ -25,7 +27,7 @@ connect:
 test: docker-test docker-stop
 
 .PHONY: test-shell
-test-shell: docker-start docker-test-shell docker-stop
+test-shell: docker-test-shell docker-stop
 
 .PHONY: clean
 clean: docker-clean
@@ -35,56 +37,71 @@ clean: docker-clean
 
 .PHONY: docker-build
 docker-build:
-	docker build -t local/hashbangctl .
+	docker build -t local/$(NAMESPACE) .
 
 .PHONY: docker-start
 docker-start:
-	docker network inspect hashbangctl \
-	|| docker network create hashbangctl
-	docker inspect -f '{{.State.Running}}' hashbangctl 2>/dev/null \
+	docker network inspect $(NAMESPACE) \
+	|| docker network create $(NAMESPACE)
+	docker inspect -f '{{.State.Running}}' $(NAMESPACE) 2>/dev/null \
 	|| docker run \
 		--detach=true \
-		--name hashbangctl \
-		--network=hashbangctl \
+		--name $(NAMESPACE) \
+		--network=$(NAMESPACE) \
 		--expose="2222" \
 		-p "2222:2222" \
-		local/hashbangctl
+		local/$(NAMESPACE)
 
 .PHONY: docker-stop
 docker-stop:
-	docker inspect -f '{{.State.Running}}' hashbangctl 2>/dev/null \
-	&& docker rm -f hashbangctl || true
+	docker inspect -f '{{.State.Running}}' $(NAMESPACE) 2>/dev/null \
+	&& docker rm -f $(NAMESPACE) || true
 
 .PHONY: docker-log
 docker-log:
-	docker logs -f hashbangctl
+	docker logs -f $(NAMESPACE)
 
 .PHONY: docker-clean
 docker-clean: docker-stop
-	docker image rm local/hashbangctl
+	docker image rm local/$(NAMESPACE)
+	docker image rm local/$(NAMESPACE)-test
+	docker rm -f $(NAMESPACE)-postgrest
+	docker rm -f $(NAMESPACE)-userdb
 
 .PHONY: docker-test
-docker-test: docker-stop docker-start docker-build-test
+docker-test: docker-build docker-stop docker-start docker-build-test
 	docker run \
 		--rm \
-		--hostname=hashbangctl-test \
-		--name hashbangctl-test \
-		--network=hashbangctl \
-		--env="CONTAINER=hashbangctl" \
-		local/hashbangctl-test
+		--hostname=$(NAMESPACE)-test \
+		--name $(NAMESPACE)-test \
+		--network=$(NAMESPACE) \
+		--env="CONTAINER=$(NAMESPACE)" \
+		local/$(NAMESPACE)-test
+	docker run \
+		--rm \
+		--name $(NAMESPACE)-userdb \
+		--network=$(NAMESPACE) \
+		--env="CONTAINER=$(NAMESPACE)" \
+		hashbang/userdb
+	docker run \
+		--rm \
+		--name $(NAMESPACE)-postgrest \
+		--network=$(NAMESPACE) \
+		--env="CONTAINER=$(NAMESPACE)" \
+		postgrest/postgrest:v6.0.2
 
 .PHONY: docker-test-shell
-docker-test-shell: docker-stop docker-start docker-build-test
+docker-test-shell: docker-build docker-stop docker-start docker-build-test
 	docker run \
 		--rm \
 		-it \
-		--hostname=hashbangctl-test \
-		--name hashbangctl-test \
-		--network=hashbangctl \
-		--env CONTAINER="hashbangctl" \
-		local/hashbangctl-test \
+		--hostname=$(NAMESPACE)-test \
+		--name $(NAMESPACE)-test \
+		--network=$(NAMESPACE) \
+		--env CONTAINER="$(NAMESPACE)" \
+		local/$(NAMESPACE)-test \
 		bash
 
 .PHONY: docker-build-test
 docker-build-test:
-	docker build -t local/hashbangctl-test test/
+	docker build -t local/$(NAMESPACE)-test test/
