@@ -81,7 +81,6 @@ docker-start:
 		--detach=true \
 		--name $(NAMESPACE)-userdb \
 		--network=$(NAMESPACE) \
-		--env="CONTAINER=$(NAMESPACE)" \
 		local/$(NAMESPACE)-userdb
 	docker inspect -f '{{.State.Running}}' $(NAMESPACE)-postgrest 2>/dev/null \
 	|| docker run \
@@ -89,6 +88,8 @@ docker-start:
 		--detach=true \
 		--name $(NAMESPACE)-postgrest \
 		--network=$(NAMESPACE) \
+		-e PGRST_DB_URI="postgres://postgres@$(NAMESPACE)-userdb/userdb" \
+  		-e PGRST_DB_ANON_ROLE="anon" \
 		--env="CONTAINER=$(NAMESPACE)" \
 		local/$(NAMESPACE)-postgrest
 

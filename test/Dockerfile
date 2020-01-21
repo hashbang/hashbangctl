@@ -6,6 +6,8 @@ RUN adduser admin && \
     apt-get install -y --force-yes \
         bats \
         sudo \
+        postgresql-client \
+        curl \
         ssh &&\
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
