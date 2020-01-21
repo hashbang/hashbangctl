@@ -1,0 +1,6 @@
+[submodule "test/modules/postgrest"]
+	path = test/modules/postgrest
+	url = https://git@github.com/PostgREST/postgrest
+[submodule "test/modules/userdb"]
+	path = test/modules/userdb
+	url = https://git@github.com/hashbang/userdb
