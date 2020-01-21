@@ -14,6 +14,7 @@ ssh_command(){
 	cmd="${3:-}"
 	ssh \
 		-p 2222 \
+		-t \
 		-a \
 		$([[ "$key" ]] && echo "-i ${HOME}/keys/id_${key}") \
 		-o UserKnownHostsFile=/dev/null \
