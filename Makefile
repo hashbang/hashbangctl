@@ -33,6 +33,14 @@ test-shell: docker-test-shell docker-stop
 clean: docker-clean
 	rm -rf ./go ./bin
 
+.PHONY: fetch
+fetch:
+	git submodule update --init --recursive
+
+.PHONY: fetch-latest
+fetch-latest:
+	git submodule foreach 'git checkout master && git pull'
+
 ## Secondary Targets
 
 .PHONY: docker-build
@@ -105,3 +113,5 @@ docker-test-shell: docker-build docker-stop docker-start docker-build-test
 .PHONY: docker-build-test
 docker-build-test:
 	docker build -t local/$(NAMESPACE)-test test/
+	docker build -t local/$(NAMESPACE)-userdb test/modules/userdb/
+	docker build -t local/$(NAMESPACE)-postgrest test/modules/postgrest/docker/
