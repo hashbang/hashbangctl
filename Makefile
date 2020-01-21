@@ -54,11 +54,11 @@ fetch-latest:
 .PHONY: docker-build
 docker-build:
 	docker build -t local/$(NAMESPACE) .
-	docker build -t local/$(NAMESPACE)-userdb test/modules/userdb/
+	docker build -t local/$(NAMESPACE)-userdb modules/userdb/
 	docker build \
 		--build-arg=POSTGREST_VERSION=v6.0.2 \
 		-t local/$(NAMESPACE)-postgrest \
-		test/modules/postgrest/docker/
+		modules/postgrest/docker/
 
 .PHONY: docker-restart
 docker-restart: docker-stop docker-start
