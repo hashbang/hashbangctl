@@ -24,10 +24,18 @@ connect:
 		-p2222 localhost
 
 .PHONY: test
-test: docker-test docker-stop
+test: \
+	docker-build-test \
+	docker-restart \
+	docker-test \
+	docker-stop
 
 .PHONY: test-shell
-test-shell: docker-test-shell docker-stop
+test-shell: \
+	docker-build-test \
+	docker-restart \
+	docker-test-shell \
+	docker-stop
 
 .PHONY: clean
 clean: docker-clean
@@ -46,6 +54,14 @@ fetch-latest:
 .PHONY: docker-build
 docker-build:
 	docker build -t local/$(NAMESPACE) .
+	docker build -t local/$(NAMESPACE)-userdb test/modules/userdb/
+	docker build \
+		--build-arg=POSTGREST_VERSION=v6.0.2 \
+		-t local/$(NAMESPACE)-postgrest \
+		test/modules/postgrest/docker/
+
+.PHONY: docker-restart
+docker-restart: docker-stop docker-start
 
 .PHONY: docker-start
 docker-start:
@@ -59,11 +75,31 @@ docker-start:
 		--expose="2222" \
 		-p "2222:2222" \
 		local/$(NAMESPACE)
+	docker inspect -f '{{.State.Running}}' $(NAMESPACE)-userdb 2>/dev/null \
+	|| docker run \
+		--rm \
+		--detach=true \
+		--name $(NAMESPACE)-userdb \
+		--network=$(NAMESPACE) \
+		--env="CONTAINER=$(NAMESPACE)" \
+		local/$(NAMESPACE)-userdb
+	docker inspect -f '{{.State.Running}}' $(NAMESPACE)-postgrest 2>/dev/null \
+	|| docker run \
+		--rm \
+		--detach=true \
+		--name $(NAMESPACE)-postgrest \
+		--network=$(NAMESPACE) \
+		--env="CONTAINER=$(NAMESPACE)" \
+		local/$(NAMESPACE)-postgrest
 
 .PHONY: docker-stop
 docker-stop:
 	docker inspect -f '{{.State.Running}}' $(NAMESPACE) 2>/dev/null \
 	&& docker rm -f $(NAMESPACE) || true
+	docker inspect -f '{{.State.Running}}' $(NAMESPACE)-userdb 2>/dev/null \
+	&& docker rm -f $(NAMESPACE)-userdb || true
+	docker inspect -f '{{.State.Running}}' $(NAMESPACE)-postgrest 2>/dev/null \
+	&& docker rm -f $(NAMESPACE)-postgrest || true
 
 .PHONY: docker-log
 docker-log:
@@ -73,11 +109,11 @@ docker-log:
 docker-clean: docker-stop
 	docker image rm local/$(NAMESPACE)
 	docker image rm local/$(NAMESPACE)-test
-	docker rm -f $(NAMESPACE)-postgrest
-	docker rm -f $(NAMESPACE)-userdb
+	docker image rm local/$(NAMESPACE)-postgrest
+	docker image rm local/$(NAMESPACE)-userdb
 
 .PHONY: docker-test
-docker-test: docker-build docker-stop docker-start docker-build-test
+docker-test:
 	docker run \
 		--rm \
 		--hostname=$(NAMESPACE)-test \
@@ -85,21 +121,10 @@ docker-test: docker-build docker-stop docker-start docker-build-test
 		--network=$(NAMESPACE) \
 		--env="CONTAINER=$(NAMESPACE)" \
 		local/$(NAMESPACE)-test
-	docker run \
-		--rm \
-		--name $(NAMESPACE)-userdb \
-		--network=$(NAMESPACE) \
-		--env="CONTAINER=$(NAMESPACE)" \
-		hashbang/userdb
-	docker run \
-		--rm \
-		--name $(NAMESPACE)-postgrest \
-		--network=$(NAMESPACE) \
-		--env="CONTAINER=$(NAMESPACE)" \
-		postgrest/postgrest:v6.0.2
 
 .PHONY: docker-test-shell
-docker-test-shell: docker-build docker-stop docker-start docker-build-test
+docker-test-shell: \
+	docker-build docker-stop docker-start docker-build-test docker-stop
 	docker run \
 		--rm \
 		-it \
@@ -113,5 +138,3 @@ docker-test-shell: docker-build docker-stop docker-start docker-build-test
 .PHONY: docker-build-test
 docker-build-test:
 	docker build -t local/$(NAMESPACE)-test test/
-	docker build -t local/$(NAMESPACE)-userdb test/modules/userdb/
-	docker build -t local/$(NAMESPACE)-postgrest test/modules/postgrest/docker/
