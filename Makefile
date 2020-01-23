@@ -88,9 +88,10 @@ docker-start:
 		--detach=true \
 		--name $(NAMESPACE)-postgrest \
 		--network=$(NAMESPACE) \
-		-e PGRST_DB_URI="postgres://postgres@$(NAMESPACE)-userdb/userdb" \
-  		-e PGRST_DB_ANON_ROLE="anon" \
-		--env="CONTAINER=$(NAMESPACE)" \
+		--env PGRST_DB_URI="postgres://postgres@$(NAMESPACE)-userdb/userdb" \
+  		--env PGRST_JWT_SECRET="a_test_only_postgrest_jwt_secret" \
+  		--env PGRST_DB_ANON_ROLE="api-anon" \
+  		--env PGRST_DB_SCHEMA="v1" \
 		local/$(NAMESPACE)-postgrest
 
 .PHONY: docker-stop
@@ -120,7 +121,11 @@ docker-test:
 		--hostname=$(NAMESPACE)-test \
 		--name $(NAMESPACE)-test \
 		--network=$(NAMESPACE) \
-		--env="CONTAINER=$(NAMESPACE)" \
+		--env CONTAINER=$(NAMESPACE) \
+		--env PGPASSWORD=test_password \
+		--env PGHOST=$(NAMESPACE)-userdb \
+		--env PGDATABASE=userdb \
+		--env PGUSER=postgres \
 		local/$(NAMESPACE)-test
 
 .PHONY: docker-test-shell
@@ -132,7 +137,11 @@ docker-test-shell: \
 		--hostname=$(NAMESPACE)-test \
 		--name $(NAMESPACE)-test \
 		--network=$(NAMESPACE) \
-		--env CONTAINER="$(NAMESPACE)" \
+		--env CONTAINER=$(NAMESPACE) \
+		--env PGPASSWORD=test_password \
+		--env PGHOST=$(NAMESPACE)-userdb \
+		--env PGDATABASE=userdb \
+		--env PGUSER=postgres \
 		local/$(NAMESPACE)-test \
 		bash
 

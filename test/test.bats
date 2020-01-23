@@ -21,7 +21,7 @@ load test_helper
 		--data-binary @- <<-EOF
 			{
 				"name": "testuser",
-				"host": "de1.hashbang.sh",
+				"host": "test.hashbang.sh",
 				"data": {
 					"shell": "/bin/bash",
 					"ssh_keys": ["$(cat keys/id_ed25519.pub)"]
@@ -30,6 +30,28 @@ load test_helper
 			EOF
 	[ "$status" -eq 0 ]
 	echo "$output" | grep "permission denied"
+}
+
+@test "Can create user with a valid host and valid auth via PostgREST" {
+
+	run curl http://hashbangctl-postgrest:3000/passwd \
+		-H "Content-Type: application/json" \
+		-H "Authorization: Bearer $(jwt_token 'api-user-create')" \
+		-X POST \
+		--data-binary @- <<-EOF
+			{
+				"name": "testuser42",
+				"host": "test.hashbang.sh",
+				"data": {
+					"shell": "/bin/bash",
+					"ssh_keys": ["$(cat keys/id_ed25519.pub)"]
+				}
+			}
+			EOF
+	[ "$status" -eq 0 ]
+
+	run curl http://hashbangctl-postgrest:3000/passwd?name=eq.testuser42
+	echo "$output" | grep "testuser42"
 }
 
 @test "Cannot login without an ssh key" {
