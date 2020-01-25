@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 func getUsername() {
@@ -26,7 +28,7 @@ func getHosts() {
 	//return true
 }
 
-func createAccount(host string, name string, key string) {
+func createAccount(logger *log.Logger, host string, name string, key string) {
 
 	type AccountData struct {
 		Shell   string   `json:"shell"`
@@ -50,7 +52,7 @@ func createAccount(host string, name string, key string) {
 		},
 	})
 
-	fmt.Println(string(jsonData))
+	logger.Println("<- ", string(jsonData))
 
 	req, _ := http.NewRequest("POST", api_url, bytes.NewBuffer(jsonData))
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", api_token))
@@ -67,13 +69,28 @@ func createAccount(host string, name string, key string) {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Response: ", string(body))
+	logger.Println("-> ", string(body))
 	resp.Body.Close()
 
 	// TODO: trigger rendering of results and exit button
 }
 
+type writer struct {
+	io.Writer
+	timeFormat string
+}
+
+func (w writer) Write(b []byte) (n int, err error) {
+	return w.Writer.Write(append([]byte(time.Now().Format(w.timeFormat)), b...))
+}
+
 func main() {
+
+	fd := os.NewFile(3, "/proc/self/fd/3")
+	defer fd.Close()
+
+	logger := log.New(&writer{fd, "2006/01/02 15:04:05 "}, "[client] ", 0)
+
 	if os.Getenv("KEY") == "none" {
 		fmt.Fprintln(
 			os.Stderr,
@@ -127,6 +144,7 @@ func main() {
 			server_dropdown := form.GetFormItem(0).(*tview.DropDown)
 			_, server := server_dropdown.GetCurrentOption()
 			createAccount(
+				logger,
 				server,
 				form.GetFormItem(1).(*tview.InputField).GetText(),
 				form.GetFormItem(2).(*tview.InputField).GetText(),
@@ -151,4 +169,5 @@ func main() {
 	if err := app.SetRoot(flex, true).Run(); err != nil {
 		panic(err)
 	}
+
 }

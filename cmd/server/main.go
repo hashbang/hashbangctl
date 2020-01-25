@@ -91,11 +91,13 @@ func handleConnection(nConn net.Conn, sshConfig *ssh.ServerConfig) {
 						}
 					}
 				}
-				log.Println("->", ip, version, user, key)
+				log.Println("[server] ++", user, version, key)
 				for req := range in {
 					switch req.Type {
 					case "shell":
 						runDir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+						pr, pw, _ := os.Pipe()
+						defer pw.Close()
 						cmd := exec.Command(
 							fmt.Sprintf("%s/client", runDir),
 						)
@@ -107,14 +109,16 @@ func handleConnection(nConn net.Conn, sshConfig *ssh.ServerConfig) {
 							fmt.Sprintf("USER=%s", user),
 							fmt.Sprintf("KEY=%s", key),
 						)
+						cmd.ExtraFiles = []*os.File{pw}
 						err := ptyRun(cmd, tty)
 						if err != nil {
 							log.Printf("%s", err)
 						}
 						var once sync.Once
+
 						close := func() {
 							channel.Close()
-							log.Println("<-", ip, version, user, key)
+							log.Println("[server] --", user, version, key)
 						}
 						go func() {
 							io.Copy(channel, f)
@@ -124,6 +128,11 @@ func handleConnection(nConn net.Conn, sshConfig *ssh.ServerConfig) {
 							io.Copy(f, channel)
 							once.Do(close)
 						}()
+						go func() {
+							defer pr.Close()
+							io.Copy(os.Stdout, pr)
+						}()
+
 					case "pty-req":
 						termLen := req.Payload[3]
 						w, h := parseDims(req.Payload[termLen+4:])
