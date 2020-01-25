@@ -1,7 +1,10 @@
 #!/bin/bash
 
 setup(){
-    psql -c "insert into hosts (name,maxusers) values ('test.hashbang.sh','500');";
+    psql -c \
+    	"insert into hosts (name,maxusers) values ('te1.hashbang.sh','500');";
+    psql -c \
+    	"insert into hosts (name,maxusers) values ('te2.hashbang.sh','200');";
 }
 
 teardown(){

@@ -1,6 +1,5 @@
 load test_helper
 
-
 @test "Can connect to userdb PostgreSQL" {
     sleep 1
 	run pg_isready -U postgres -h hashbangctl-userdb;
@@ -41,7 +40,7 @@ load test_helper
 		--data-binary @- <<-EOF
 			{
 				"name": "testuser42",
-				"host": "test.hashbang.sh",
+				"host": "te1.hashbang.sh",
 				"data": {
 					"shell": "/bin/bash",
 					"ssh_keys": ["$(cat keys/id_ed25519.pub)"]

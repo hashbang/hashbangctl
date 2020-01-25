@@ -1,9 +1,14 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
+	"io/ioutil"
+	"log"
+	"net/http"
 	"os"
 )
 
@@ -14,10 +19,58 @@ func getUsername() {
 	//return true
 }
 
-func createAccount(server string, user string, key string) {
-	// Create account
-	// trigger rendering of results and exit button
-	//log.Println(server, user, key)
+func getHosts() {
+	// Modify input username to be unix compatible
+	// if result is available, return
+	// If not, append random 4 digit number then return
+	//return true
+}
+
+func createAccount(host string, name string, key string) {
+
+	type AccountData struct {
+		Shell   string   `json:"shell"`
+		SshKeys []string `json:"ssh_keys"`
+	}
+
+	type AccountBody struct {
+		Name string      `json:"name"`
+		Host string      `json:"host"`
+		Data AccountData `json:"data"`
+	}
+
+	api_url := fmt.Sprintf("%s/passwd", os.Getenv("API_URL"))
+	api_token := os.Getenv("API_TOKEN")
+	jsonData, err := json.Marshal(AccountBody{
+		Name: name,
+		Host: host,
+		Data: AccountData{
+			Shell:   "/bin/bash",
+			SshKeys: []string{key},
+		},
+	})
+
+	fmt.Println(string(jsonData))
+
+	req, _ := http.NewRequest("POST", api_url, bytes.NewBuffer(jsonData))
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", api_token))
+	req.Header.Add("Content-Type", "application/json")
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Response: ", string(body))
+	resp.Body.Close()
+
+	// TODO: trigger rendering of results and exit button
 }
 
 func main() {
@@ -62,7 +115,7 @@ func main() {
 		form.SetBorder(false)
 		form.SetButtonsAlign(1)
 		form.AddDropDown("Server",
-			[]string{"de1.hashbang.sh", "la1.hashbang.sh"}, 0, nil,
+			[]string{"te1.hashbang.sh", "te2.hashbang.sh"}, 0, nil,
 		)
 		form.AddInputField("User Name",
 			os.Getenv("USER"), 33, tview.InputFieldMaxLength(30), nil,

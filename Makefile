@@ -3,7 +3,10 @@ NAMESPACE ?= hashbangctl
 ## Primary Targets
 
 .PHONY: build
-build:
+build: docker-build
+
+.PHONY: build-native
+build-native:
 	GOBIN=$(PWD)/bin \
 	GOPATH=$(PWD)/go \
 	CGO_ENABLED=0 \
@@ -11,7 +14,13 @@ build:
 	GOARCH=amd64 \
 	go install ./...
 
-serve:
+.PHONY: serve
+serve: docker-start docker-logs docker-stop
+
+.PHONY: serve-native
+serve-native:
+	API_URL="http://hashbangctl-postgrest:3000" \
+	API_TOKEN="eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYXBpLXVzZXItY3JlYXRlIn0.iOcRzRAjPsT9DOhu5OSeRuQ38D3KL5NppsfyuZYiDeI" \
 	bin/server
 
 .PHONY: connect
@@ -72,6 +81,8 @@ docker-start:
 		--detach=true \
 		--name $(NAMESPACE) \
 		--network=$(NAMESPACE) \
+		--env API_URL="http://hashbangctl-postgrest:3000" \
+		--env API_TOKEN="eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYXBpLXVzZXItY3JlYXRlIn0.iOcRzRAjPsT9DOhu5OSeRuQ38D3KL5NppsfyuZYiDeI" \
 		--expose="2222" \
 		-p "2222:2222" \
 		local/$(NAMESPACE)
@@ -103,9 +114,9 @@ docker-stop:
 	docker inspect -f '{{.State.Running}}' $(NAMESPACE)-postgrest 2>/dev/null \
 	&& docker rm -f $(NAMESPACE)-postgrest || true
 
-.PHONY: docker-log
-docker-log:
-	docker logs -f $(NAMESPACE)
+.PHONY: docker-logs
+docker-logs:
+	scripts/docker-logs $(NAMESPACE) $(NAMESPACE)-userdb $(NAMESPACE)-postgrest
 
 .PHONY: docker-clean
 docker-clean: docker-stop
