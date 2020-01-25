@@ -13,7 +13,7 @@ cleanup(){
 trap cleanup EXIT
 
 while [ $# -ne 0 ]; do
-    (docker logs -f -t --tail=10 "$1"|sed -e "s/^/$1: /")&
+    (docker logs -f --tail=10 "$1"|sed -e "s/^/$1: /")&
     pids+=($!)
     shift
 done

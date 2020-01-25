@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"github.com/kr/pty"
 	"golang.org/x/crypto/ssh"
@@ -80,18 +81,24 @@ func handleConnection(nConn net.Conn, sshConfig *ssh.ServerConfig) {
 			channel, requests, _ := newChannel.Accept()
 			f, tty, _ := pty.Open()
 			go func(in <-chan *ssh.Request) {
-				user := conn.Conn.User()
-				ip := fmt.Sprintf("%s", conn.Conn.RemoteAddr())
-				version := fmt.Sprintf("%s", conn.Conn.ClientVersion())
-				key := "none"
+				sshKey := "none"
 				if conn.Permissions != nil {
 					if conn.Permissions.Extensions != nil {
 						if k, ok := conn.Permissions.Extensions["pubkey"]; ok {
-							key = k
+							sshKey = k
 						}
 					}
 				}
-				log.Println("[server] ++", user, version, key)
+
+				loginData := LoginData{
+					UserName:   conn.Conn.User(),
+					IpAddress:  fmt.Sprintf("%s", conn.Conn.RemoteAddr()),
+					SshVersion: fmt.Sprintf("%s", conn.Conn.ClientVersion()),
+					SshKey:     sshKey,
+				}
+				jsonLoginData, _ := json.Marshal(loginData)
+
+				log.Println("[server] ++", string(jsonLoginData))
 				for req := range in {
 					switch req.Type {
 					case "shell":
@@ -104,10 +111,10 @@ func handleConnection(nConn net.Conn, sshConfig *ssh.ServerConfig) {
 						cmd.Env = append(
 							os.Environ(),
 							"TERM=xterm-256color",
-							fmt.Sprintf("IP=%s", ip),
-							fmt.Sprintf("VERSION=%s", version),
-							fmt.Sprintf("USER=%s", user),
-							fmt.Sprintf("KEY=%s", key),
+							fmt.Sprintf("IP=%s", loginData.IpAddress),
+							fmt.Sprintf("VERSION=%s", loginData.SshVersion),
+							fmt.Sprintf("USER=%s", loginData.UserName),
+							fmt.Sprintf("KEY=%s", loginData.SshKey),
 						)
 						cmd.ExtraFiles = []*os.File{pw}
 						err := ptyRun(cmd, tty)
@@ -118,7 +125,7 @@ func handleConnection(nConn net.Conn, sshConfig *ssh.ServerConfig) {
 
 						close := func() {
 							channel.Close()
-							log.Println("[server] --", user, version, key)
+							log.Println("[server] --", string(jsonLoginData))
 						}
 						go func() {
 							io.Copy(channel, f)
@@ -153,9 +160,17 @@ var (
 	hostPrivateKeySigner ssh.Signer
 )
 
+type LoginData struct {
+	UserName   string `json:"name"`
+	IpAddress  string `json:"ip"`
+	SshKey     string `json:"key"`
+	SshVersion string `json:"version"`
+}
+
 func init() {
 	key, _ := rsa.GenerateKey(rand.Reader, 2048)
 	hostPrivateKeySigner, _ = ssh.NewSignerFromKey(key)
+
 }
 
 func main() {

@@ -6,12 +6,10 @@ import (
 	"fmt"
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"time"
 )
 
 func getUsername() {
@@ -41,8 +39,8 @@ func createAccount(logger *log.Logger, host string, name string, key string) {
 		Data AccountData `json:"data"`
 	}
 
-	api_url := fmt.Sprintf("%s/passwd", os.Getenv("API_URL"))
-	api_token := os.Getenv("API_TOKEN")
+	apiUrl := fmt.Sprintf("%s/passwd", os.Getenv("API_URL"))
+	apiToken := os.Getenv("API_TOKEN")
 	jsonData, err := json.Marshal(AccountBody{
 		Name: name,
 		Host: host,
@@ -52,10 +50,10 @@ func createAccount(logger *log.Logger, host string, name string, key string) {
 		},
 	})
 
-	logger.Println("<- ", string(jsonData))
+	logger.Println("[client] <-", string(jsonData))
 
-	req, _ := http.NewRequest("POST", api_url, bytes.NewBuffer(jsonData))
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", api_token))
+	req, _ := http.NewRequest("POST", apiUrl, bytes.NewBuffer(jsonData))
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", apiToken))
 	req.Header.Add("Content-Type", "application/json")
 	client := &http.Client{}
 
@@ -69,27 +67,17 @@ func createAccount(logger *log.Logger, host string, name string, key string) {
 		log.Fatal(err)
 	}
 
-	logger.Println("-> ", string(body))
+	logger.Println("[client] ->", string(body))
 	resp.Body.Close()
 
 	// TODO: trigger rendering of results and exit button
-}
-
-type writer struct {
-	io.Writer
-	timeFormat string
-}
-
-func (w writer) Write(b []byte) (n int, err error) {
-	return w.Writer.Write(append([]byte(time.Now().Format(w.timeFormat)), b...))
 }
 
 func main() {
 
 	fd := os.NewFile(3, "/proc/self/fd/3")
 	defer fd.Close()
-
-	logger := log.New(&writer{fd, "2006/01/02 15:04:05 "}, "[client] ", 0)
+	logger := log.New(fd, "", log.Ldate|log.Ltime)
 
 	if os.Getenv("KEY") == "none" {
 		fmt.Fprintln(
