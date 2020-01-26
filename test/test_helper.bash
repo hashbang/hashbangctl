@@ -1,15 +1,12 @@
 #!/bin/bash
 
 setup(){
-    psql -c \
-    	"insert into hosts (name,maxusers) values ('te1.hashbang.sh','500');";
-    psql -c \
-    	"insert into hosts (name,maxusers) values ('te2.hashbang.sh','200');";
+	echo "Settting up test"
 }
 
 teardown(){
+	echo "Tearing down test"
     psql -c "delete from passwd;";
-    psql -c "delete from hosts;";
 }
 
 ssh_command(){

@@ -1,7 +1,7 @@
 load test_helper
 
 @test "Can connect to userdb PostgreSQL" {
-    sleep 1
+    sleep 5
 	run pg_isready -U postgres -h hashbangctl-userdb;
 	[ "$status" -eq 0 ]
 	echo "$output" | grep "accepting connections"
