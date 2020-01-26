@@ -92,6 +92,7 @@ docker-start:
 		--detach=true \
 		--name $(NAMESPACE)-userdb \
 		--network=$(NAMESPACE) \
+		--volume $(PWD)/test/test_data.sql:/docker-entrypoint-initdb.d/99-init.sql \
 		local/$(NAMESPACE)-userdb
 	docker inspect -f '{{.State.Running}}' $(NAMESPACE)-postgrest 2>/dev/null \
 	|| docker run \
