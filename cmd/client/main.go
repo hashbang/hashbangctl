@@ -9,8 +9,10 @@ import (
 	"github.com/rivo/tview"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
+	"time"
 )
 
 type RequestData struct {
@@ -32,6 +34,11 @@ type ResponseBody struct {
 	Request RequestBody `json:"request"`
 }
 
+type Host struct {
+	Name     string `json:"name"`
+	MaxUsers int    `json:"maxusers"`
+}
+
 func getUsername() {
 	// Modify input username to be unix compatible
 	// if result is available, return
@@ -39,11 +46,36 @@ func getUsername() {
 	//return true
 }
 
-func getHosts() {
-	// Modify input username to be unix compatible
-	// if result is available, return
-	// If not, append random 4 digit number then return
-	//return true
+func getHosts() ([]string, error) {
+
+	var hostResponse []Host
+	hosts := []string{}
+
+	apiUrl := fmt.Sprintf("%s/hosts", os.Getenv("API_URL"))
+	apiToken := os.Getenv("API_TOKEN")
+	req, _ := http.NewRequest("GET", apiUrl, nil)
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", apiToken))
+	req.Header.Add("Content-Type", "application/json")
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return hosts, err
+	}
+	body, err := ioutil.ReadAll(res.Body)
+	defer res.Body.Close()
+	if err != nil {
+		return hosts, err
+	}
+	err = json.Unmarshal(body, &hostResponse)
+	if err != nil {
+		return hosts, err
+	}
+
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	for _, i := range r.Perm(len(hostResponse)) {
+		hosts = append(hosts, hostResponse[i].Name)
+	}
+	return hosts, nil
 }
 
 func createAccount(
@@ -108,6 +140,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	hosts, _ := getHosts()
+
 	app := tview.NewApplication()
 
 	logo := tview.NewTextView()
@@ -138,11 +172,7 @@ func main() {
 		form.SetButtonBackgroundColor(tcell.ColorWhite)
 		form.SetBorder(false)
 		form.SetButtonsAlign(1)
-		// TODO: populate list from server on startup
-		// TODO: set a default randomly
-		form.AddDropDown("Server",
-			[]string{"te1.hashbang.sh", "te2.hashbang.sh"}, 0, nil,
-		)
+		form.AddDropDown("Server", hosts, 0, nil)
 		// TODO: check username is available. Append numbers if needed
 		form.AddInputField("User Name",
 			os.Getenv("USER"), 33, tview.InputFieldMaxLength(30), nil,
