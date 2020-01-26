@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/kr/pty"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/time/rate"
 	"io"
 	"log"
 	"net"
@@ -17,8 +18,11 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 	"unsafe"
 )
+
+var limiter = NewIPRateLimiter(rate.Every(time.Minute), 10)
 
 func setWinsize(fd uintptr, w, h uint32) {
 	syscall.Syscall(
@@ -69,8 +73,43 @@ func keyboardInteractiveCallback(
 
 func handleConnection(nConn net.Conn, sshConfig *ssh.ServerConfig) {
 	conn, chans, _, _ := ssh.NewServerConn(nConn, sshConfig)
+	addr, _ := conn.Conn.RemoteAddr().(*net.TCPAddr)
+	ipAddress := addr.IP.String()
+	sshKey := "none"
+	if conn.Permissions != nil {
+		if conn.Permissions.Extensions != nil {
+			if k, ok := conn.Permissions.Extensions["pubkey"]; ok {
+				sshKey = k
+			}
+		}
+	}
+
+	limiter := limiter.GetLimiter(ipAddress)
+
+	loginData := LoginData{
+		UserName:   conn.Conn.User(),
+		IpAddress:  ipAddress,
+		SshKey:     sshKey,
+		SshVersion: fmt.Sprintf("%s", conn.Conn.ClientVersion()),
+	}
+	jsonLoginData, _ := json.Marshal(loginData)
+
 	go func(chans <-chan ssh.NewChannel) {
 		for newChannel := range chans {
+
+			if !limiter.Allow() {
+				log.Println(
+					"[server] !!",
+					"Rate Limit exceeded",
+					string(jsonLoginData),
+				)
+				newChannel.Reject(
+					ssh.ConnectionFailed,
+					fmt.Sprintf("Rate limit exceeded"),
+				)
+				continue
+			}
+
 			if t := newChannel.ChannelType(); t != "session" {
 				newChannel.Reject(
 					ssh.UnknownChannelType,
@@ -81,24 +120,9 @@ func handleConnection(nConn net.Conn, sshConfig *ssh.ServerConfig) {
 			channel, requests, _ := newChannel.Accept()
 			f, tty, _ := pty.Open()
 			go func(in <-chan *ssh.Request) {
-				sshKey := "none"
-				if conn.Permissions != nil {
-					if conn.Permissions.Extensions != nil {
-						if k, ok := conn.Permissions.Extensions["pubkey"]; ok {
-							sshKey = k
-						}
-					}
-				}
-
-				loginData := LoginData{
-					UserName:   conn.Conn.User(),
-					IpAddress:  fmt.Sprintf("%s", conn.Conn.RemoteAddr()),
-					SshVersion: fmt.Sprintf("%s", conn.Conn.ClientVersion()),
-					SshKey:     sshKey,
-				}
-				jsonLoginData, _ := json.Marshal(loginData)
 
 				log.Println("[server] ++", string(jsonLoginData))
+
 				for req := range in {
 					switch req.Type {
 					case "shell":
