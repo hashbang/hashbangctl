@@ -39,7 +39,16 @@ type Host struct {
 	MaxUsers int    `json:"maxusers"`
 }
 
+func getExisting() {
+	// TODO:
+	// hash public key
+	// lookup pubkey via userdb/postgrest computed column
+	// kick user out if their key is already in use
+}
+
 func getUsername() {
+	// TODO:
+	// curl -i "https://userdb.hashbang.sh/passwd?name=ilike.lrvick*&select=name&limit10"
 	// Modify input username to be unix compatible
 	// if result is available, return
 	// If not, append random 4 digit number then return

@@ -8,16 +8,18 @@ This dameon allows users to create/manage shell accounts over ssh.
 ## Features ##
 
 * Current
-  * Users can ssh in and get a form to create a user (does nothing yet)
-  * If incoming ssh key not detected, direct users to run ssh-keygen
-  * Prefills form with username and ssh key from incoming connection
+  * New users get a form to create an account
+    * Prefills form with hosts, username and ssh key
+      * Randomly populate hosts dropdown from userdb
+      * Direct users to run ssh-keygen if no key detected
+      * Suggest available username based on incoming username
+  * Connection IP rate limiting
+  * Basic end to end test suite
 * Future
-  * Will randomly set a server but allow users to change it
   * If incoming ssh key detected and account exists, direct to management menu
     * Allow users to change their details in UserDB, manage keys, etc
-  * Abuse mitigation
-    * text captcha
-    * rate limiting
+  * Support non-interactive use
+  * text captcha
   * k8s deployment boilerplate
     * strict pod security policy
     * strict apparmor/seccomp rules
