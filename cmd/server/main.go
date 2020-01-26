@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/rand"
 	"crypto/rsa"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"github.com/kr/pty"
@@ -15,60 +14,21 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"sync"
-	"syscall"
 	"time"
-	"unsafe"
 )
 
 var limiter = NewIPRateLimiter(rate.Every(time.Minute), 10)
 
-func setWinsize(fd uintptr, w, h uint32) {
-	syscall.Syscall(
-		syscall.SYS_IOCTL,
-		fd,
-		uintptr(syscall.TIOCSWINSZ),
-		uintptr(unsafe.Pointer(
-			&struct{ h, w, x, y uint16 }{uint16(h), uint16(w), 0, 0},
-		)),
-	)
-}
+var (
+	hostPrivateKeySigner ssh.Signer
+)
 
-func parseDims(b []byte) (uint32, uint32) {
-	w := binary.BigEndian.Uint32(b)
-	h := binary.BigEndian.Uint32(b[4:])
-	return w, h
-}
-
-func ptyRun(c *exec.Cmd, tty *os.File) (err error) {
-	defer tty.Close()
-	c.Stdout = tty
-	c.Stdin = tty
-	c.Stderr = tty
-	c.SysProcAttr = &syscall.SysProcAttr{
-		Setctty: true,
-		Setsid:  true,
-	}
-	return c.Start()
-}
-
-func publicKeyCallback(
-	conn ssh.ConnMetadata,
-	key ssh.PublicKey,
-) (*ssh.Permissions, error) {
-	return &ssh.Permissions{
-		Extensions: map[string]string{
-			"pubkey": strings.TrimSpace(string(ssh.MarshalAuthorizedKey(key))),
-		},
-	}, nil
-}
-
-func keyboardInteractiveCallback(
-	ssh.ConnMetadata,
-	ssh.KeyboardInteractiveChallenge,
-) (*ssh.Permissions, error) {
-	return nil, nil
+type LoginData struct {
+	UserName   string `json:"name"`
+	IpAddress  string `json:"ip"`
+	SshKey     string `json:"key"`
+	SshVersion string `json:"version"`
 }
 
 func handleConnection(nConn net.Conn, sshConfig *ssh.ServerConfig) {
@@ -180,21 +140,9 @@ func handleConnection(nConn net.Conn, sshConfig *ssh.ServerConfig) {
 	}(chans)
 }
 
-var (
-	hostPrivateKeySigner ssh.Signer
-)
-
-type LoginData struct {
-	UserName   string `json:"name"`
-	IpAddress  string `json:"ip"`
-	SshKey     string `json:"key"`
-	SshVersion string `json:"version"`
-}
-
 func init() {
 	key, _ := rsa.GenerateKey(rand.Reader, 2048)
 	hostPrivateKeySigner, _ = ssh.NewSignerFromKey(key)
-
 }
 
 func main() {
