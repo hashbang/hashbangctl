@@ -4,13 +4,20 @@ RUN apt update && apt install -y git golang
 
 ADD . /src/
 
-RUN cd /src/ && \
-    GOBIN=/src/bin \
+WORKDIR /src
+
+ENV GOBIN=/src/bin \
     GOPATH=/src/go \
     CGO_ENABLED=0 \
     GOOS=linux \
-    GOARCH=amd64 \
-    go install ./...
+    GOARCH=amd64
+
+COPY go.mod .
+COPY go.sum .
+
+RUN go mod download
+
+RUN go install ./...
 
 FROM scratch
 
