@@ -81,7 +81,7 @@ func handleConnection(nConn net.Conn, sshConfig *ssh.ServerConfig) {
 			f, tty, _ := pty.Open()
 			go func(in <-chan *ssh.Request) {
 
-				log.Println("[server] ++", string(jsonLoginData))
+				log.Println("[server] ->", string(jsonLoginData))
 
 				for req := range in {
 					switch req.Type {
@@ -109,7 +109,7 @@ func handleConnection(nConn net.Conn, sshConfig *ssh.ServerConfig) {
 
 						close := func() {
 							channel.Close()
-							log.Println("[server] --", string(jsonLoginData))
+							log.Println("[server] <-", string(jsonLoginData))
 						}
 						go func() {
 							io.Copy(channel, f)

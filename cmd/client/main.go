@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
@@ -11,6 +12,25 @@ import (
 	"net/http"
 	"os"
 )
+
+type RequestData struct {
+	Shell   string   `json:"shell"`
+	SshKeys []string `json:"ssh_keys"`
+}
+
+type RequestBody struct {
+	Name string      `json:"name"`
+	Host string      `json:"host"`
+	Data RequestData `json:"data"`
+}
+
+type ResponseBody struct {
+	Hint    string      `json:"hint"`
+	Details string      `json:"details"`
+	Message string      `json:"message"`
+	Code    string      `json:"code"`
+	Request RequestBody `json:"request"`
+}
 
 func getUsername() {
 	// Modify input username to be unix compatible
@@ -26,51 +46,50 @@ func getHosts() {
 	//return true
 }
 
-func createAccount(logger *log.Logger, host string, name string, key string) {
-
-	type AccountData struct {
-		Shell   string   `json:"shell"`
-		SshKeys []string `json:"ssh_keys"`
-	}
-
-	type AccountBody struct {
-		Name string      `json:"name"`
-		Host string      `json:"host"`
-		Data AccountData `json:"data"`
-	}
-
+func createAccount(
+	logger *log.Logger,
+	host string,
+	name string,
+	key string,
+) error {
 	apiUrl := fmt.Sprintf("%s/passwd", os.Getenv("API_URL"))
 	apiToken := os.Getenv("API_TOKEN")
-	jsonData, err := json.Marshal(AccountBody{
+	requestBody := RequestBody{
 		Name: name,
 		Host: host,
-		Data: AccountData{
+		Data: RequestData{
 			Shell:   "/bin/bash",
 			SshKeys: []string{key},
 		},
-	})
-
-	logger.Println("[client] <-", string(jsonData))
-
+	}
+	jsonData, err := json.Marshal(requestBody)
+	logger.Println("[client] ??", string(jsonData))
 	req, _ := http.NewRequest("POST", apiUrl, bytes.NewBuffer(jsonData))
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", apiToken))
 	req.Header.Add("Content-Type", "application/json")
 	client := &http.Client{}
-
-	resp, err := client.Do(req)
+	res, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-
-	body, err := ioutil.ReadAll(resp.Body)
+	if res.StatusCode == 201 {
+		logger.Println("[client] ++", string(jsonData))
+		return nil
+	}
+	body, err := ioutil.ReadAll(res.Body)
+	defer res.Body.Close()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-
-	logger.Println("[client] ->", string(body))
-	resp.Body.Close()
-
-	// TODO: trigger rendering of results and exit button
+	var responseBody ResponseBody
+	err = json.Unmarshal(body, &responseBody)
+	if err != nil {
+		return err
+	}
+	responseBody.Request = requestBody
+	jsonError, err := json.Marshal(responseBody)
+	logger.Println("[client] !!", string(jsonError))
+	return errors.New(responseBody.Message)
 }
 
 func main() {
@@ -119,9 +138,12 @@ func main() {
 		form.SetButtonBackgroundColor(tcell.ColorWhite)
 		form.SetBorder(false)
 		form.SetButtonsAlign(1)
+		// TODO: populate list from server on startup
+		// TODO: set a default randomly
 		form.AddDropDown("Server",
 			[]string{"te1.hashbang.sh", "te2.hashbang.sh"}, 0, nil,
 		)
+		// TODO: check username is available. Append numbers if needed
 		form.AddInputField("User Name",
 			os.Getenv("USER"), 33, tview.InputFieldMaxLength(30), nil,
 		)
@@ -131,12 +153,26 @@ func main() {
 		form.AddButton("Create", func() {
 			server_dropdown := form.GetFormItem(0).(*tview.DropDown)
 			_, server := server_dropdown.GetCurrentOption()
-			createAccount(
-				logger,
-				server,
-				form.GetFormItem(1).(*tview.InputField).GetText(),
-				form.GetFormItem(2).(*tview.InputField).GetText(),
+			user := form.GetFormItem(1).(*tview.InputField).GetText()
+			key := form.GetFormItem(2).(*tview.InputField).GetText()
+			err := createAccount(logger, server, user, key)
+			if err != nil {
+				app.Stop()
+				fmt.Fprintln(
+					os.Stderr,
+					"\nError: Account creation failed\n",
+					fmt.Errorf("\n%v\n", err),
+				)
+				os.Exit(1)
+			}
+			app.Stop()
+			fmt.Fprintln(
+				os.Stdout,
+				"\nAccount creation successful!\n",
+				"\nYou can now connect to your account via:\n",
+				fmt.Sprintf("\n$ ssh %s@%s\n", user, server),
 			)
+			os.Exit(1)
 		})
 		form.AddButton("Exit", app.Stop)
 		return form
