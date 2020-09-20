@@ -15,15 +15,11 @@ import (
 	"time"
 )
 
-type RequestData struct {
-	Shell   string   `json:"shell"`
-	SshKeys []string `json:"ssh_keys"`
-}
-
 type RequestBody struct {
-	Name string      `json:"name"`
-	Host string      `json:"host"`
-	Data RequestData `json:"data"`
+	Name  string   `json:"name"`
+	Host  string   `json:"host"`
+	Shell string   `json:"shell"`
+	Keys  []string `json:"keys"`
 }
 
 type ResponseBody struct {
@@ -61,9 +57,11 @@ func getHosts() ([]string, error) {
 	hosts := []string{}
 
 	apiUrl := fmt.Sprintf("%s/hosts", os.Getenv("API_URL"))
-	apiToken := os.Getenv("API_TOKEN")
+	//TODO: implement API tokens on prod
+	// apiToken := os.Getenv("API_TOKEN")
 	req, _ := http.NewRequest("GET", apiUrl, nil)
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", apiToken))
+	//TODO: implement API tokens on prod
+	// req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", apiToken))
 	req.Header.Add("Content-Type", "application/json")
 	client := &http.Client{}
 	res, err := client.Do(req)
@@ -93,20 +91,20 @@ func createAccount(
 	name string,
 	key string,
 ) error {
-	apiUrl := fmt.Sprintf("%s/passwd", os.Getenv("API_URL"))
-	apiToken := os.Getenv("API_TOKEN")
+	apiUrl := fmt.Sprintf("%s/signup", os.Getenv("API_URL"))
+	//TODO: implement API tokens on prod
+	//apiToken := os.Getenv("API_TOKEN")
 	requestBody := RequestBody{
-		Name: name,
-		Host: host,
-		Data: RequestData{
-			Shell:   "/bin/bash",
-			SshKeys: []string{key},
-		},
+		Name:  name,
+		Host:  host,
+		Shell: "/bin/bash",
+		Keys:  []string{key},
 	}
 	jsonData, err := json.Marshal(requestBody)
 	logger.Println("[client] ??", string(jsonData))
 	req, _ := http.NewRequest("POST", apiUrl, bytes.NewBuffer(jsonData))
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", apiToken))
+	//TODO: implement API tokens on prod
+	//req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", apiToken))
 	req.Header.Add("Content-Type", "application/json")
 	client := &http.Client{}
 	res, err := client.Do(req)

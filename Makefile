@@ -19,7 +19,7 @@ serve: docker-start docker-logs docker-stop
 
 .PHONY: serve-native
 serve-native:
-	API_URL="http://hashbangctl-postgrest:3000" \
+	API_URL="https://userdb.hashbang.sh/v1" \
 	API_TOKEN="eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYXBpLXVzZXItY3JlYXRlIn0.iOcRzRAjPsT9DOhu5OSeRuQ38D3KL5NppsfyuZYiDeI" \
 	bin/server
 
@@ -105,6 +105,20 @@ docker-start:
   		--env PGRST_DB_ANON_ROLE="api-anon" \
   		--env PGRST_DB_SCHEMA="v1" \
 		local/$(NAMESPACE)-postgrest
+
+.PHONY: docker-start-prod
+docker-start-prod:
+	docker network inspect $(NAMESPACE) \
+	|| docker network create $(NAMESPACE)
+	docker inspect -f '{{.State.Running}}' $(NAMESPACE) 2>/dev/null \
+	|| docker run \
+		--detach=true \
+		--name $(NAMESPACE) \
+		--network=$(NAMESPACE) \
+		--env API_URL="https://userdb.hashbang.sh/v1" \
+		--expose="2222" \
+		-p "2222:2222" \
+		local/$(NAMESPACE)
 
 .PHONY: docker-stop
 docker-stop:
