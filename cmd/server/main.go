@@ -5,7 +5,7 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
-	"github.com/kr/pty"
+	"github.com/creack/pty"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/time/rate"
 	"io"
