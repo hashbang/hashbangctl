@@ -3,7 +3,7 @@ NAMESPACE ?= hashbangctl
 ## Primary Targets
 
 .PHONY: build
-build: docker-build
+build: fetch docker-build
 
 .PHONY: build-native
 build-native:
@@ -63,11 +63,11 @@ fetch-latest:
 .PHONY: docker-build
 docker-build:
 	docker build -t local/$(NAMESPACE) .
-	docker build -t local/$(NAMESPACE)-userdb modules/userdb/
+	docker build -t local/$(NAMESPACE)-userdb test/modules/userdb/
 	docker build \
 		--build-arg=POSTGREST_VERSION=v6.0.2 \
 		-t local/$(NAMESPACE)-postgrest \
-		modules/postgrest/docker/
+		test/postgrest/
 
 .PHONY: docker-restart
 docker-restart: docker-stop docker-start
