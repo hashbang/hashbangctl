@@ -1,0 +1,29 @@
+kind: pipeline
+type: docker
+name: build-master
+
+clone:
+  disable: true
+
+trigger:
+  branch:
+    - master
+  event:
+    - push
+
+steps:
+  - name: clone
+    image: plugins/git
+    settings:
+      recursive: true
+      tags: true
+  - name: build
+    # https://github.com/drGrove/drone-kaniko/tree/v0.7.0
+    image: drgrove/drone-kaniko@sha256:e3045421c3683e6baf5628b22ea0ee1cd7ae217f4de0e1bc53a0a1a20335b108
+    depends_on: [ clone ]
+    settings:
+      repo: hashbang/hashbangctl
+      reproducible: true
+      username: hashbangbot
+      password:
+        from_secret: DOCKERHUB_API_KEY
