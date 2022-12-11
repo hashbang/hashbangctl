@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hashbangctl
+spec:
+  template:
+    spec:
+      containers:
+        - name: hashbangctl
+          image: hashbang/hashbangctl
+          env:
+            - name: API_URL
+              value: https://userdb.hashbang.sh/v1
+            - name: API_TOKEN
+              value: eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYXBpLXVzZXItY3JlYXRlIn0.iOcRzRAjPsT9DOhu5OSeRuQ38D3KL5NppsfyuZYiDeI
+          ports:
+            - containerPort: 2222
+              name: ssh
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hashbangctl
+spec:
+  ports:
+    - name: ssh
+      targetPort: ssh
+      nodePort: 30022
+      port: 22
+  type: NodePort
