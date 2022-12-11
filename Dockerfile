@@ -1,4 +1,4 @@
-FROM debian:bookworm as build
+FROM debian:bullseye as build
 
 RUN apt update && apt install -y git golang
 
