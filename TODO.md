@@ -1,0 +1,6 @@
+- add these todos to issues
+- take host keys via env vars
+- Add CA certs for userdb connection
+- Support ECC host keys, rsa deprecated
+- do not die on error
+- add error handling and logs
