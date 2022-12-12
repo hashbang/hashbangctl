@@ -1,6 +1,6 @@
 FROM debian:bullseye as build
 
-RUN apt update && apt install -y git golang
+RUN apt update && apt install -y git golang ca-certificates
 
 WORKDIR /src
 
@@ -22,5 +22,6 @@ FROM scratch
 
 COPY --from=build /src/bin/server /server
 COPY --from=build /src/bin/client /client
+COPY --from=build /etc/ssl/certs /etc/ssl/certs
 
 CMD ["/server"]
