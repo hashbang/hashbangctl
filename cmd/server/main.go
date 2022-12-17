@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/json"
+	"encoding/base64"
 	"fmt"
 	"github.com/creack/pty"
 	"golang.org/x/crypto/ssh"
@@ -141,7 +142,7 @@ func handleConnection(nConn net.Conn, sshConfig *ssh.ServerConfig) {
 }
 
 func init() {
-	key, _ := rsa.GenerateKey(rand.Reader, 2048)
+	key, _ := base64.StdEncoding.DecodeString([]byte(os.Getenv("HOST_KEY_ED25519"))
 	hostPrivateKeySigner, _ = ssh.NewSignerFromKey(key)
 }
 

@@ -38,6 +38,12 @@ Build or rebuild the binaries.
 make
 ```
 
+### Generate SSH Host keys
+
+```
+make keys
+```
+
 ### Serve
 
 Start the server
