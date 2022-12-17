@@ -22,6 +22,6 @@ FROM scratch
 
 COPY --from=build /src/bin/server /server
 COPY --from=build /src/bin/client /client
-COPY --from=build /etc/ssl/certs /etc/ssl/certs
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 CMD ["/server"]
