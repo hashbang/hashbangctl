@@ -147,7 +147,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	hosts, _ := getHosts()
+	hosts, err := getHosts()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "\nError: Unable to get host list")
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 
 	app := tview.NewApplication()
 
