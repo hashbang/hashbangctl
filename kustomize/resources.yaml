@@ -18,6 +18,7 @@ spec:
           ports:
             - containerPort: 2222
               name: ssh
+
 ---
 apiVersion: v1
 kind: Service
@@ -27,6 +28,4 @@ spec:
   ports:
     - name: ssh
       targetPort: ssh
-      nodePort: 30022
-      port: 22
-  type: NodePort
+      port: 2222
