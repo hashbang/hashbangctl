@@ -1,10 +1,11 @@
 package main
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
 	"encoding/json"
-	"encoding/base64"
+	"crypto/sha512"
+	"crypto/ed25519"
+	"encoding/binary"
+	"math/rand"
 	"fmt"
 	"github.com/creack/pty"
 	"golang.org/x/crypto/ssh"
@@ -141,9 +142,33 @@ func handleConnection(nConn net.Conn, sshConfig *ssh.ServerConfig) {
 	}(chans)
 }
 
+type SyncReader struct {
+	lk     sync.Mutex
+	reader io.Reader
+}
+
+func NewSyncReader(reader io.Reader) *SyncReader {
+	return &SyncReader{
+		reader: reader,
+	}
+}
+
+func (r *SyncReader) Read(p []byte) (n int, err error) {
+	r.lk.Lock()
+	defer r.lk.Unlock()
+	return r.reader.Read(p)
+}
+
 func init() {
-	key, _ := base64.StdEncoding.DecodeString([]byte(os.Getenv("HOST_KEY_ED25519"))
-	hostPrivateKeySigner, _ = ssh.NewSignerFromKey(key)
+	hash := sha512.New()
+	io.WriteString(hash, os.Getenv("HOST_KEY_SEED"))
+	var seed uint64 = binary.BigEndian.Uint64(hash.Sum(nil)[:8])
+	var reader = NewSyncReader(rand.New(rand.NewSource(int64(seed))))
+	pubKey, privKey, _ := ed25519.GenerateKey(reader)
+	sshPubKey, _ := ssh.NewPublicKey(pubKey)
+	hostPrivateKeySigner, _ = ssh.NewSignerFromKey(privKey)
+	fmt.Println("SSH Daemon Started")
+	fmt.Printf("Host Key: %s", ssh.MarshalAuthorizedKey(sshPubKey))
 }
 
 func main() {

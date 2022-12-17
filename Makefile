@@ -5,10 +5,6 @@ NAMESPACE ?= hashbangctl
 .PHONY: build
 build: fetch docker-build
 
-.PHONY: keys
-keys:
-	base64 -w0 <(exec 3>&1 ; ssh-keygen -qt ed25519 -N "" -f /proc/self/fd/3 <<<y >/dev/null 2>&1)
-
 .PHONY: build-native
 build-native:
 	GOBIN=$(PWD)/bin \
@@ -25,7 +21,7 @@ serve: docker-start docker-logs docker-stop
 serve-native:
 	API_URL="https://userdb.hashbang.sh/v1" \
 	API_TOKEN="eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYXBpLXVzZXItY3JlYXRlIn0.iOcRzRAjPsT9DOhu5OSeRuQ38D3KL5NppsfyuZYiDeI" \
-	HOST_KEY_ED25519="LS0tLS1CRUdJTiBPUEVOU1NIIFBSSVZBVEUgS0VZLS0tLS0KYjNCbGJuTnphQzFyWlhrdGRqRUFBQUFBQkc1dmJtVUFBQUFFYm05dVpRQUFBQUFBQUFBQkFBQUFNd0FBQUF0emMyZ3RaVwpReU5UVXhPUUFBQUNESzlaUjcrcVhGbnhYb21PaWY1cERoQ01TQVhPYlU5eTZGdlJOSWFJdi92UUFBQUppbHkxYnVwY3RXCjdnQUFBQXR6YzJndFpXUXlOVFV4T1FBQUFDREs5WlI3K3FYRm54WG9tT2lmNXBEaENNU0FYT2JVOXk2RnZSTklhSXYvdlEKQUFBRUEvVng5Q0dxMzg3R2ZnVmFHREtROGMzK09HWWp6WU9HLzVkODI0RVNVQitzcjFsSHY2cGNXZkZlaVk2Si9ta09FSQp4SUJjNXRUM0xvVzlFMGhvaS8rOUFBQUFEMnh5ZG1samEwQndaWEp6YjI1aGJBRUNBd1FGQmc9PQotLS0tLUVORCBPUEVOU1NIIFBSSVZBVEUgS0VZLS0tLS0K" \
+	HOST_KEY_SEED="This is an insecure seed" \
 	bin/server
 
 .PHONY: connect
@@ -88,6 +84,7 @@ docker-start:
 		--network=$(NAMESPACE) \
 		--env API_URL="http://hashbangctl-postgrest:3000" \
 		--env API_TOKEN="eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYXBpLXVzZXItY3JlYXRlIn0.iOcRzRAjPsT9DOhu5OSeRuQ38D3KL5NppsfyuZYiDeI" \
+		--env HOST_KEY_SEED="Replace me with something actually random" \
 		--expose="2222" \
 		-p "2222:2222" \
 		local/$(NAMESPACE)
