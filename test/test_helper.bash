@@ -2,11 +2,22 @@
 
 setup(){
 	echo "Settting up test"
+	psql -c "insert into hosts (name,maxusers) values ('test.hashbang.sh','500');";
+	psql -c "insert into hosts (name,maxusers) values ('test2.hashbang.sh','500');";
+	tmux new -d -s hashbangctl-test
+	tmux send-keys -t hashbangctl-test "source test/test_helper.bash" ENTER
 }
 
 teardown(){
 	echo "Tearing down test"
-    psql -c "delete from passwd;";
+	psql -c "delete from passwd;";
+	psql -c "delete from hosts;";
+	tmux kill-session -t hashbangctl-test
+}
+
+tmux_commmand(){
+	cmd="${1:-}"
+	tmux send-keys -t hashbangctl-test "$cmd"
 }
 
 ssh_command(){
