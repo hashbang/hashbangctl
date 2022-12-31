@@ -18,6 +18,7 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+	"regexp"
 )
 
 var limiter = NewIPRateLimiter(rate.Every(time.Minute), 10)
@@ -87,6 +88,25 @@ func handleConnection(nConn net.Conn, sshConfig *ssh.ServerConfig) {
 
 				for req := range in {
 					switch req.Type {
+					case "exec":
+						re := regexp.MustCompile(`[^a-zA-Z0-9]+`)
+						command := re.ReplaceAllString(string(req.Payload), "")
+						log.Println("[server] <-", string(jsonLoginData))
+						switch command {
+							case "debug":
+								channel.Write([]byte(fmt.Sprintf(
+									"%s\n\r",jsonLoginData,
+								)))
+								channel.Close()
+								return
+							default:
+								channel.Write([]byte(fmt.Sprintf(
+									"\n\rUnknown command: \"%s\"\n\n\r",
+									command,
+								)))
+								channel.Close()
+								return
+						}
 					case "shell":
 						runDir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 						pr, pw, _ := os.Pipe()
