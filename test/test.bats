@@ -5,10 +5,16 @@ load test_helper
 	[ "$status" -eq 255 ]
 }
 
-@test "Can login with an ed25519 ssh key" {
+@test "can login with an ed25519 ssh key" {
 	run ssh_command "ed25519" "jdoe" "debug"
 	[ "$status" -eq 0 ]
 	[[ "$output" == *"ssh-ed25519"* ]]
+}
+
+@test "can login with an rsa ssh key" {
+	run ssh_command "rsa" "jdoe" "debug"
+	[ "$status" -eq 0 ]
+	[[ "$output" == *"rsa"* ]]
 }
 
 @test "Cannot run an invalid command" {
