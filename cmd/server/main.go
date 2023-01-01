@@ -97,6 +97,9 @@ func handleConnection(nConn net.Conn, sshConfig *ssh.ServerConfig) {
 								channel.Write([]byte(fmt.Sprintf(
 									"%s\n\r",jsonLoginData,
 								)))
+								channel.SendRequest(
+									"exit-status", false, []byte{0, 0, 0, 0},
+								)
 								channel.Close()
 								return
 							default:
