@@ -92,8 +92,7 @@ func createAccount(
 	key string,
 ) error {
 	apiUrl := fmt.Sprintf("%s/signup", os.Getenv("API_URL"))
-	//TODO: implement API tokens on prod
-	//apiToken := os.Getenv("API_TOKEN")
+	apiToken := os.Getenv("API_TOKEN")
 	requestBody := RequestBody{
 		Name:  name,
 		Host:  host,
@@ -103,8 +102,7 @@ func createAccount(
 	jsonData, err := json.Marshal(requestBody)
 	logger.Println("[client] ??", string(jsonData))
 	req, _ := http.NewRequest("POST", apiUrl, bytes.NewBuffer(jsonData))
-	//TODO: implement API tokens on prod
-	//req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", apiToken))
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", apiToken))
 	req.Header.Add("Content-Type", "application/json")
 	client := &http.Client{}
 	res, err := client.Do(req)

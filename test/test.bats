@@ -20,6 +20,5 @@ load test_helper
 @test "Can create user with an ed25519 ssh key" {
 	run tmux_command "ssh_command ed25519"
 	run tmux_keys TAB TAB TAB ENTER
-	tmux_debug
 	[ "$status" -eq 0 ]
 }
