@@ -9,6 +9,7 @@ RUN adduser admin && \
         postgresql-client \
         curl \
 	tmux \
+	jq \
         ssh &&\
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
