@@ -26,22 +26,21 @@ func main() {
 	    fmt.Fprintln(os.Stderr, "\nError: Unable to get keys list")
 	    fmt.Fprintln(os.Stderr, err)
     }
+    hosts, err := getHosts()
+    if err != nil {
+    	fmt.Fprintln(os.Stderr, "\nError: Unable to get host list")
+    	fmt.Fprintln(os.Stderr, err)
+    	os.Exit(1)
+    }
     if len(keys) == 0 {
-	    hosts, err := getHosts()
-	    if err != nil {
-	    	fmt.Fprintln(os.Stderr, "\nError: Unable to get host list")
-	    	fmt.Fprintln(os.Stderr, err)
-	    	os.Exit(1)
-	    }
         createForm(logger, hosts)
     } else {
-	    fmt.Fprintln(os.Stderr, "\nError: User with this key already exists")
         users, err := getUsersById(keys[0].Uid)
 	    if err != nil {
 	    	fmt.Fprintln(os.Stderr, "\nError: Unable to get user list")
 	    	fmt.Fprintln(os.Stderr, err)
 	    	os.Exit(1)
 	    }
-        fmt.Println(users)
+        editForm(logger, hosts, users[0], keys)
     }
 }

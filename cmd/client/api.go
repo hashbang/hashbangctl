@@ -153,7 +153,7 @@ func getUsersById(
     return users, nil
 }
 
-func createAccount(
+func createUser(
 	logger *log.Logger,
 	host string,
 	name string,
@@ -195,4 +195,13 @@ func createAccount(
 	jsonError, err := json.Marshal(responseBody)
 	logger.Println("[client] !!", string(jsonError))
 	return errors.New(responseBody.Message)
+}
+
+func editUser(
+	logger *log.Logger,
+    user User,
+	sshPublicKeys []SshPublicKey,
+) error {
+    logger.Println("User: %s",user)
+	return errors.New("placeholder")
 }
