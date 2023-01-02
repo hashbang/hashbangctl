@@ -7,7 +7,7 @@ fi
 
 pids=()
 cleanup(){
-   kill "${pids[@]}"
+   kill "${pids[@]}" >/dev/null 2>&1
 }
 
 trap cleanup EXIT

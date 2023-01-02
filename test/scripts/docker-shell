@@ -1,0 +1,9 @@
+#!/bin/bash
+set -e
+
+groupadd -g ${GID} test
+useradd -u ${UID} -g ${GID} -d /home/test test
+
+echo '%test ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+setpriv --reuid=test --regid=test --init-groups $@
